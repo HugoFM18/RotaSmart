@@ -233,7 +233,27 @@ Requiere conexión a internet. El script consulta la API de NASA POWER para los
 
 ---
 
-## 9. Rendimiento objetivo
+## 9. Despliegue
+
+El sitio se publica con **GitHub Pages** desde la rama `gh-pages` (sin depender de
+GitHub Actions):
+
+```bash
+# La compilación para Pages usa la ruta base /RotaSmart/
+$env:GITHUB_ACTIONS="true"; npm run build
+```
+
+Luego se publica el contenido de `dist/` en la rama `gh-pages`:
+
+```bash
+git subtree push --prefix dist origin gh-pages
+```
+
+**URL:** <https://johncamilogarzonvargas.github.io/RotaSmart/>
+
+---
+
+## 10. Rendimiento objetivo
 
 | Métrica | Objetivo |
 |---|---|
