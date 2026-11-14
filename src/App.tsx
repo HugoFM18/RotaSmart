@@ -1,59 +1,59 @@
-import { lazy, Suspense, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { lazy, Suspense, useEffect, useMemo } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Header } from "./components/Header";
-import { SelectBar } from "./components/SelectBar";
-import { ClimateCard } from "./components/ClimateCard";
+import { LocationCard } from "./components/LocationCard";
+import { CropSelect } from "./components/CropSelect";
+import { ViabilityCard } from "./components/ViabilityCard";
+import { SiteCard } from "./components/SiteCard";
 import { PrioritiesCard } from "./components/PrioritiesCard";
 import { ScenarioCard } from "./components/ScenarioCard";
 import { RankingCard } from "./components/RankingCard";
 import { useStore } from "./store";
-import { evaluateAll, type MuniData } from "./engine";
-import { getJson } from "./utils";
+import { evaluateAll, evaluateCrop } from "./engine";
+import { fetchSite, fetchPlace } from "./site";
 
-const MapView = lazy(() =>
-  import("./components/MapView").then((m) => ({ default: m.MapView })),
+const GlobeView = lazy(() =>
+  import("./components/GlobeView").then((m) => ({ default: m.GlobeView })),
 );
 
-type IndexEntry = {
-  id: string;
-  name: string;
-  lat: number;
-  lon: number;
-  aridity: number;
-  trend: number;
-  ppt: number;
-};
-
 export default function App() {
-  const { t } = useTranslation();
-  const selected = useStore((s) => s.selected);
-  const setSelected = useStore((s) => s.setSelected);
+  const { t, i18n } = useTranslation();
+  const lat = useStore((s) => s.lat);
+  const lon = useStore((s) => s.lon);
+  const crop = useStore((s) => s.crop);
   const priorities = useStore((s) => s.priorities);
   const scenario = useStore((s) => s.scenario);
+  const setPlace = useStore((s) => s.setPlace);
 
-  const geo = useQuery({
-    queryKey: ["geo"],
-    queryFn: () => getJson<any>("geo/huila.json"),
-  });
-  const index = useQuery({
-    queryKey: ["index"],
-    queryFn: () => getJson<IndexEntry[]>("index.json"),
-  });
-  const muni = useQuery({
-    queryKey: ["muni", selected],
-    queryFn: () => getJson<MuniData>(`m/${selected}.json`),
-    enabled: !!selected,
+  const siteQuery = useQuery({
+    queryKey: ["site", lat.toFixed(3), lon.toFixed(3)],
+    queryFn: () => fetchSite(lat, lon),
+    staleTime: 60 * 60 * 1000,
+    retry: 1,
+    placeholderData: keepPreviousData,
   });
 
-  const results = useMemo(
-    () => (muni.data ? evaluateAll(muni.data, priorities, scenario) : []),
-    [muni.data, priorities, scenario],
+  const placeQuery = useQuery({
+    queryKey: ["place", lat.toFixed(3), lon.toFixed(3), i18n.resolvedLanguage],
+    queryFn: () => fetchPlace(lat, lon, i18n.resolvedLanguage ?? "es"),
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (placeQuery.data) setPlace(placeQuery.data);
+  }, [placeQuery.data, setPlace]);
+
+  const site = siteQuery.data;
+
+  const viability = useMemo(
+    () => (site ? evaluateCrop(crop, site, scenario) : null),
+    [site, crop, scenario],
   );
 
-  const options = useMemo(
-    () => (index.data ?? []).slice().sort((a, b) => a.name.localeCompare(b.name, "es")),
-    [index.data],
+  const rotations = useMemo(
+    () => (site ? evaluateAll(site, priorities, scenario) : []),
+    [site, priorities, scenario],
   );
 
   return (
@@ -63,16 +63,26 @@ export default function App() {
       <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <aside className="order-2 min-h-0 w-full overflow-y-auto border-t border-line p-3 lg:order-1 lg:w-[420px] lg:shrink-0 lg:border-r lg:border-t-0">
           <div className="space-y-3 pb-2">
-            <SelectBar options={options} value={selected} onChange={setSelected} />
+            <LocationCard />
+            <CropSelect />
+
+            {viability && <ViabilityCard viability={viability} />}
+
+            {siteQuery.isLoading && !site && (
+              <p className="px-1 py-6 text-center text-xs text-muted">{t("loading")}</p>
+            )}
+            {siteQuery.isError && (
+              <p className="rounded-xl border border-rust/30 bg-rust/5 px-3 py-2 text-[11px] text-rust">
+                {t("error")}
+              </p>
+            )}
+
+            {site && <SiteCard site={site} />}
 
             <PrioritiesCard />
             <ScenarioCard />
 
-            {results.length > 0 && <RankingCard results={results} />}
-            {muni.data && <ClimateCard muni={muni.data} />}
-
-            {muni.isLoading && <p className="px-1 text-xs text-muted">{t("loading")}</p>}
-            {muni.isError && <p className="px-1 text-xs text-rust">{t("error")}</p>}
+            {rotations.length > 0 && <RankingCard results={rotations} />}
 
             <footer className="space-y-1 px-1 pb-4 pt-2 text-[10px] leading-relaxed text-muted">
               <p>{t("footer.source")}</p>
@@ -82,26 +92,15 @@ export default function App() {
           </div>
         </aside>
 
-        <div className="relative order-1 h-[44vh] w-full lg:order-2 lg:h-auto lg:flex-1">
+        <div className="relative order-1 h-[46vh] w-full lg:order-2 lg:h-auto lg:flex-1">
           <Suspense
             fallback={
-              <div className="grid h-full place-items-center text-xs text-muted">
+              <div className="grid h-full place-items-center bg-[#0B1220] text-xs text-white/60">
                 {t("loading")}
               </div>
             }
           >
-            {geo.data && index.data ? (
-              <MapView
-                geo={geo.data}
-                index={index.data}
-                selected={selected}
-                onSelect={setSelected}
-              />
-            ) : (
-              <div className="grid h-full place-items-center text-xs text-muted">
-                {t("loading")}
-              </div>
-            )}
+            <GlobeView />
           </Suspense>
         </div>
       </main>

@@ -1,17 +1,20 @@
 import { create } from "zustand";
-import type { Priorities } from "./engine";
-
-export type LayerId = "ndvi" | "precip" | "temp" | null;
+import type { CropId, Priorities } from "./engine";
 
 type Store = {
-  selected: string | null;
+  lat: number;
+  lon: number;
+  place: string | null;
+  crop: CropId;
   priorities: Priorities;
   scenario: { rain: number; temp: number };
-  layer: LayerId;
-  setSelected: (id: string | null) => void;
+  flyToken: number;
+  setPoint: (lat: number, lon: number) => void;
+  focusPoint: (lat: number, lon: number, place?: string | null) => void;
+  setPlace: (place: string | null) => void;
+  setCrop: (crop: CropId) => void;
   setPriority: (key: keyof Priorities, value: number) => void;
   setScenario: (scenario: { rain: number; temp: number }) => void;
-  setLayer: (layer: LayerId) => void;
   resetScenario: () => void;
 };
 
@@ -24,14 +27,21 @@ export const DEFAULT_PRIORITIES: Priorities = {
 };
 
 export const useStore = create<Store>((set) => ({
-  selected: "neiva",
+  lat: 2.9345,
+  lon: -75.2809,
+  place: "Neiva, Huila, Colombia",
+  crop: "maiz",
   priorities: DEFAULT_PRIORITIES,
   scenario: { rain: 0, temp: 0 },
-  layer: null,
-  setSelected: (id) => set({ selected: id }),
+  flyToken: 0,
+
+  setPoint: (lat, lon) => set({ lat, lon }),
+  focusPoint: (lat, lon, place = null) =>
+    set((s) => ({ lat, lon, place, flyToken: s.flyToken + 1 })),
+  setPlace: (place) => set({ place }),
+  setCrop: (crop) => set({ crop }),
   setPriority: (key, value) =>
     set((s) => ({ priorities: { ...s.priorities, [key]: value } })),
   setScenario: (scenario) => set({ scenario }),
-  setLayer: (layer) => set({ layer }),
   resetScenario: () => set({ scenario: { rain: 0, temp: 0 } }),
 }));

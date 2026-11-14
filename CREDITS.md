@@ -13,8 +13,8 @@ Challenge 2026**, reto *"Cambio de rumbo: Adaptando las granjas con datos de la 
 
 | Fuente | Uso en el proyecto | Enlace |
 |---|---|---|
-| **NASA POWER** | Series mensuales 2005–2024 de temperatura, precipitación, humedad relativa, viento y radiación para los 37 municipios del Huila. | <https://power.larc.nasa.gov/> |
-| **NASA GIBS** | Tiles WMTS de las capas NDVI, precipitación (IMERG) y temperatura superficial (MODIS). | <https://nasa.github.io/nasa-gibs/> |
+| **NASA POWER** | Series mensuales 2005–2024 consultadas en vivo para cualquier coordenada del planeta. | <https://power.larc.nasa.gov/> |
+| **NASA GIBS** | Tiles WMTS: Blue Marble (globo) y capas NDVI, precipitación y temperatura. | <https://nasa.github.io/nasa-gibs/> |
 | **NASA SMAP** | Humedad del suelo (visualización vía GIBS L4). | <https://smap.jpl.nasa.gov/> |
 | **NASA GPM / IMERG** | Precipitación global (visualización vía GIBS). | <https://gpm.nasa.gov/> |
 | **NASA MODIS** | Índices de vegetación y temperatura de superficie (vía GIBS). | <https://modis.gsfc.nasa.gov/> |
@@ -29,14 +29,17 @@ oficiales.
 
 | Fuente | Uso | Licencia | Enlace |
 |---|---|---|---|
-| **geoBoundaries** | Límites administrativos de Colombia (ADM1) y municipios del Huila (ADM2). | CC BY 4.0 | <https://www.geoboundaries.org/> |
-| **OpenStreetMap / CARTO** | Mapa base. | ODbL / atribución CARTO | <https://www.openstreetmap.org/copyright> |
+| **SoilGrids (ISRIC)** | Propiedades del suelo (arcilla, arena, materia orgánica, pH, CIC). | CC BY 4.0 | <https://soilgrids.org/> |
+| **Nominatim / OpenStreetMap** | Búsqueda de lugares. | ODbL | <https://nominatim.org/> |
+| **BigDataCloud** | Geocodificación inversa. | Términos del servicio | <https://www.bigdatacloud.com/> |
+| **geoBoundaries** | Límites administrativos (datos regionales opcionales). | CC BY 4.0 | <https://www.geoboundaries.org/> |
+| **OpenStreetMap / CARTO** | Mapa base de referencia. | ODbL / atribución CARTO | <https://www.openstreetmap.org/copyright> |
 | **FAO-56** | Referencia metodológica para evapotranspiración y coeficientes de cultivo. | Documento público | <https://www.fao.org/3/x0490s/x0490s00.htm> |
 
-**Nota metodológica:** las propiedades del suelo (arcilla, arena, materia orgánica, pH y
-CEC) se **estiman a partir del clima** de NASA POWER mediante un modelo pedológico simple,
-porque la API pública de SoilGrids devuelve valores nulos para esta región. Se presentan
-como estimaciones, no como mediciones de laboratorio.
+**Nota metodológica:** las propiedades del suelo se consultan a **SoilGrids (ISRIC)** para
+cada punto. Cuando el servicio no devuelve datos para una coordenada (ocurre en algunas
+zonas de Sudamérica), se estiman a partir del clima de NASA POWER mediante un modelo
+pedológico simple, y la interfaz lo indica como *"Suelo: estimado"*.
 
 ## 3. Software y librerías
 

@@ -1,23 +1,63 @@
 {
   "app": {
     "name": "RotaSmart",
-    "tagline": "Evidence for every rotation"
+    "tagline": "Crop viability with NASA data"
   },
   "header": {
     "challenge": "NASA Space Apps 2026",
     "badge": "NASA data"
   },
-  "loading": "Loading data…",
-  "error": "Data could not be loaded.",
-  "select": {
-    "label": "Municipality",
-    "placeholder": "Select a municipality",
-    "count": "37 municipalities in Huila"
+  "loading": "Querying NASA data…",
+  "error": "Could not retrieve data for this point. Try another location.",
+  "location": {
+    "title": "Location",
+    "hint": "Click anywhere on the globe or search for a place.",
+    "search": "Search a place",
+    "searchPlaceholder": "e.g. Pitalito, Colombia",
+    "noResults": "No results",
+    "lat": "Latitude",
+    "lon": "Longitude",
+    "soilReal": "Soil: SoilGrids",
+    "soilEstimated": "Soil: estimated"
   },
-  "climate": {
-    "title": "Agro-climatic profile",
+  "crop": {
+    "title": "What crop do you grow?",
+    "hint": "Pick the crop you grow today and we check whether it is viable here.",
+    "label": "Current crop"
+  },
+  "viability": {
+    "title": "Crop viability",
+    "score": "Viability",
+    "verdict": {
+      "high": "Viable",
+      "medium": "Viable with management",
+      "low": "High risk",
+      "none": "Not recommended"
+    },
+    "factors": {
+      "water": "Water",
+      "temperature": "Temperature",
+      "soil": "Soil",
+      "risk": "Risk"
+    },
+    "limits": "Limiting factors"
+  },
+  "limits": {
+    "water_low": "Water deficit: the crop needs more water than the rainfall provides.",
+    "temp_high": "Mean temperature is above the crop's optimal range.",
+    "temp_low": "Mean temperature is below the crop's optimal range.",
+    "frost": "Some months carry frost risk for this crop.",
+    "soil_ph": "Soil pH is outside the ideal range.",
+    "soil_texture": "Soil texture is not the most suitable.",
+    "soil_om": "Soil organic matter is low.",
+    "risk": "High climate risk: drought, heat or erosion."
+  },
+  "site": {
+    "title": "Site data",
+    "tmax": "Max temperature",
+    "tmin": "Min temperature",
+    "tmean": "Mean temperature",
     "rain": "Annual rainfall",
-    "temp": "Mean temperature",
     "et0": "Evapotranspiration",
     "aridity": "Aridity index",
     "chartTitle": "Annual cycle",
@@ -26,17 +66,13 @@
     "trendTitle": "2005–2024 trend",
     "trendTemp": "Temperature",
     "trendPpt": "Annual rainfall",
-    "perDecade": "per decade"
-  },
-  "hazards": {
-    "title": "Climate hazards",
+    "perDecade": "per decade",
+    "hazards": "Climate hazards",
     "frost": "Frost",
     "heat": "Heat stress",
     "drought": "Drought",
-    "erosivity": "Erosivity"
-  },
-  "soil": {
-    "title": "Estimated soil",
+    "erosivity": "Erosivity",
+    "soil": "Soil",
     "clay": "Clay",
     "sand": "Sand",
     "om": "Organic matter",
@@ -45,7 +81,7 @@
   },
   "priorities": {
     "title": "My priorities",
-    "hint": "Adjust what matters most and the ranking updates instantly.",
+    "hint": "Adjust what matters most and the rotations reorder.",
     "water": "Water",
     "income": "Income",
     "risk": "Risk",
@@ -61,10 +97,8 @@
   },
   "ranking": {
     "title": "Recommended rotations",
-    "subtitle": "Ranked by your priorities",
-    "best": "Best option",
-    "why": "Why?",
-    "score": "Score"
+    "subtitle": "Best sequences for this site",
+    "best": "Best option"
   },
   "why": {
     "water_high": "Good water balance: the crop's demand fits within available rainfall.",
@@ -78,15 +112,9 @@
     "labor": "Requires little labor."
   },
   "map": {
-    "layers": "Satellite layers",
-    "none": "None",
-    "ndvi": "Vegetation (NDVI)",
-    "precip": "Precipitation",
-    "temp": "Temperature",
-    "legend": "Water stress",
-    "low": "Low",
-    "high": "High",
-    "hint": "Click a municipality"
+    "hint": "Click the globe to analyze a point",
+    "reset": "View globe",
+    "selected": "Selected point"
   },
   "crops": {
     "maiz": "Maize",
@@ -111,7 +139,7 @@
     "r8": "Sorghum → Beans → Cover crop"
   },
   "footer": {
-    "source": "Data: NASA POWER 2005–2024 · NASA GIBS · Soil estimated from climate",
+    "source": "Data: NASA POWER 2005–2024 · SoilGrids (ISRIC) · NASA Blue Marble",
     "disclaimer": "A support tool. It does not replace the farmer's or agronomist's judgment.",
     "independent": "Independent project. Not affiliated with or endorsed by NASA."
   }

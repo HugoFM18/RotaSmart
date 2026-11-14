@@ -1,77 +1,61 @@
 # RotaSmart
 
-**Herramienta de apoyo a decisiones para rotaciones de cultivo con datos de la NASA.**
+**Viabilidad de cultivos en cualquier punto del mundo, con datos de la NASA.**
 
 > Reto: **"Cambio de rumbo: Adaptando las granjas con datos de la NASA"**
 > *(Field Shift: Adapting Farms with NASA Data — NASA Space Apps Challenge 2026)*
 
 **Demo en vivo:** <https://rotasmart-kappa.vercel.app/>
 
-> Respaldo en GitHub Pages: <https://johncamilogarzonvargas.github.io/RotaSmart/>
-
 ---
 
 ## 1. Contexto
 
-Los agricultores enfrentan temperaturas cambiantes, lluvias irregulares, sequías, eventos
-extremos y pérdida de salud del suelo. Elegir qué sembrar después de cada cosecha es una
-decisión de alto impacto que hoy se toma por costumbre o intuición, sin evidencia del
-comportamiento real de su territorio.
-
-**RotaSmart** convierte veinte años de observaciones satelitales de la NASA y datos locales
-de suelo en una recomendación comprensible: qué rotación conviene, por qué, y qué pasa si
-el clima cambia.
-
-El proyecto se enfoca en **Colombia** (33 departamentos) con datos detallados para los
-**37 municipios del Huila**.
+Un agricultor sabe qué cultiva, pero no siempre sabe si ese cultivo es sostenible en su
+suelo y su clima. RotaSmart responde esa pregunta en segundos: **haz clic en tu parcela
+del globo, elige tu cultivo y obtén su viabilidad** junto con los datos que la explican.
 
 ---
 
 ## 2. Qué hace
 
-1. El usuario elige un municipio en el mapa o lo busca por nombre.
-2. RotaSmart muestra el perfil agroclimático: suelo, pendiente, lluvia, temperatura,
-   humedad del suelo y vegetación de los últimos 20 años.
-3. El agricultor ajusta sus prioridades con cinco controles: **agua, ingreso, riesgo,
-   suelo y mano de obra**.
-4. El motor ordena las rotaciones posibles y explica **por qué** cada una sube o baja.
-5. Un simulador climático responde al instante: *"¿y si llueve 20 % menos?"*.
+1. **Explora el globo terráqueo** (imagen NASA Blue Marble) y hace clic en cualquier
+   punto del planeta, o busca un lugar por nombre.
+2. **Indica el cultivo actual** entre diez opciones (maíz, fríjol, café, cacao, arroz…).
+3. **Consulta en vivo** 20 años de datos de NASA POWER y las propiedades del suelo.
+4. **Devuelve un índice de viabilidad 0–100** con veredicto y cuatro factores: agua,
+   temperatura, suelo y riesgo.
+5. **Señala los factores limitantes**: déficit hídrico, pH inadecuado, heladas, textura.
+6. **Muestra los datos del sitio**: temperatura máxima y mínima, lluvia anual,
+   evapotranspiración, índice de aridez, tendencias 2005–2024, riesgos y suelo.
+7. **Recomienda rotaciones** que mejorarían la situación del lote.
 
 ---
 
 ## 3. Características
 
-- **Mapa interactivo** con coropleto por municipio y capas satelitales de la NASA.
-- **Ranking de rotaciones** evaluado en ocho indicadores: agua, cobertura del suelo,
-  nutrientes, erosión, interrupción de plagas, ingreso, resiliencia climática y mano de obra.
-- **Explicabilidad**: cada recomendación indica por qué sube o baja.
-- **Prioridades del agricultor** con cinco controles que reordenan el ranking en vivo.
-- **Escenario climático interactivo**: lluvia ±30 % y temperatura de −1 a +3 °C.
-- **Perfil agroclimático** con ciclo anual y tendencia 2005–2024.
-- **Riesgos climáticos** y estimación de propiedades del suelo.
-- **Interfaz bilingüe** español / inglés con un solo botón.
-- **Funciona sin conexión** (PWA) tras la primera visita.
+- **Globo 3D mundial** con proyección de globo de MapLibre y NASA Blue Marble.
+- **Análisis bajo demanda** en cualquier coordenada del planeta.
+- **Buscador de lugares** con geocodificación inversa y directa.
+- **Viabilidad del cultivo** explicada en cuatro factores y factores limitantes.
+- **Datos agroclimáticos completos**: máximas, mínimas, lluvia, ET0, aridez y tendencias.
+- **Suelo real de SoilGrids** cuando está disponible, con estimación por clima como respaldo.
+- **Rotaciones recomendadas** ajustables por prioridades del agricultor.
+- **Escenario climático** interactivo: lluvia ±30 % y temperatura −1 a +3 °C.
+- **Bilingüe** español / inglés con un solo botón.
+- **PWA**: funciona sin conexión tras la primera visita.
 - **Sin registro, sin contraseña, sin instalación.**
 
 ---
 
 ## 4. APIs y datos de la NASA
 
-Todas las fuentes de NASA son abiertas y gratuitas. Las marcadas con ✅ no requieren
-clave de API ni registro.
-
-| API / Servicio | Qué entrega | Uso en RotaSmart | Clave |
+| Servicio | Qué entrega | Uso en RotaSmart | Clave |
 |---|---|---|---|
-| **NASA POWER** | Meteorología y energía solar: temperatura, precipitación, humedad, viento y radiación, en series diarias, mensuales y climatologías (1991–presente). | Base del balance hídrico, grados día de crecimiento, riesgo de helada y olas de calor. | ✅ No |
-| **NASA GIBS** (Global Imagery Browse Services) | Tiles de imagen satelital en formato WMTS, listos para mapas web. | Capas visuales del mapa: NDVI, precipitación, humedad del suelo y temperatura superficial. | ✅ No |
-| **NASA SMAP** | Humedad del suelo (superficial y radicular) cada 2–3 días. | Déficit hídrico real del lote y detección de estrés. | ✅ No (vía GIBS) |
-| **NASA GPM / IMERG** | Precipitación global de alta resolución temporal. | Distribución de lluvia, eventos extremos y lluvia erosiva. | ✅ No (vía GIBS) |
-| **NASA MODIS** | Índices de vegetación (NDVI/EVI) y temperatura de superficie. | Estado y tendencia de la vegetación; estrés térmico. | ✅ No (vía GIBS) |
-| **NASA SRTM** | Modelo digital de elevación de 30 m. | Pendiente del terreno y riesgo de erosión. | ✅ No |
-| **NASA Landsat** | Reflectancia superficial de 30 m desde 1984. | Análisis histórico extendido (opcional). | ⚠️ Earthdata Login |
-| **NASA AppEEARS** | Extracción de series de tiempo por punto o polígono. | Subsetting masivo de SMAP/MODIS (opcional). | ⚠️ Earthdata Login |
-
-### Endpoints principales
+| **NASA POWER** | Temperatura, precipitación, humedad, viento y radiación, series mensuales 2005–2024 para cualquier coordenada. | Base del balance hídrico, ET0, tendencias y riesgos. | ✅ No |
+| **NASA GIBS — Blue Marble** | Imagen global de la Tierra. | Textura del globo terráqueo. | ✅ No |
+| **NASA GIBS — MODIS / IMERG / SMAP** | Tiles satelitales de vegetación, lluvia y humedad. | Disponibles para capas de mapa. | ✅ No |
+| **NASA SMAP** | Humedad del suelo. | Estrés hídrico (vía GIBS). | ✅ No |
 
 ```text
 NASA POWER (mensual, punto):
@@ -80,51 +64,47 @@ https://power.larc.nasa.gov/api/temporal/monthly/point
   &community=AG&longitude=-75.28&latitude=2.93
   &start=2005&end=2024&format=JSON
 
-NASA GIBS (tile WMTS):
-https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{CAPA}/default/{FECHA}/
-  GoogleMapsCompatible_Level{9}/{z}/{y}/{x}.{ext}
+NASA GIBS (Blue Marble):
+https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/
+  BlueMarble_ShadedRelief_Bathymetry/default/2020-01-01/
+  GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg
 ```
-
-**Capas GIBS verificadas:**
-
-| Variable | Capa | Formato |
-|---|---|---|
-| NDVI | `MODIS_Terra_L3_NDVI_16Day` | png |
-| Precipitación | `IMERG_Precipitation_Rate` | png |
-| Humedad de suelo | `SMAP_L4_Analyzed_Root_Zone_Soil_Moisture` | png |
-| Temperatura superficial | `MODIS_Terra_L3_Land_Surface_Temp_Daily_Day` | png |
-| Imagen satelital | `MODIS_Terra_CorrectedReflectance_TrueColor` | jpg |
-
-> Requisito del reto: se usa **al menos un recurso de datos de la NASA**. RotaSmart usa seis.
-> Enlaces completos en [`CREDITS.md`](CREDITS.md).
 
 ### Otras fuentes
 
-| Fuente | Aporte | Licencia |
-|---|---|---|
-| **Propiedades del suelo** | Arcilla, arena, materia orgánica, pH y CEC, estimadas a partir del clima de NASA POWER (la API pública de SoilGrids no cubre la región) | — |
-| **geoBoundaries** | Límites administrativos ADM1 / ADM2 | CC BY 4.0 |
-| **FAO-56** | Coeficientes de cultivo (Kc) | Público |
-| **CARTO / OpenStreetMap** | Mapa base | Atribución |
+| Fuente | Uso |
+|---|---|
+| **SoilGrids (ISRIC)** | Arcilla, arena, materia orgánica, pH y CIC a 250 m |
+| **Nominatim / OpenStreetMap** | Búsqueda de lugares |
+| **BigDataCloud** | Geocodificación inversa |
+| **FAO-56** | Metodología de evapotranspiración (Hargreaves) |
+
+> Si SoilGrids no cubre un punto, el suelo se estima a partir del clima de NASA POWER y
+> la interfaz lo indica como *"Suelo: estimado"*.
 
 ---
 
 ## 5. Cómo funciona
 
 ```text
-Pipeline (antes del evento)             Navegador
-─────────────────────────                ─────────────────────────
-POWER ─┐                                 Mapa (MapLibre)
-GIBS  ─┤                                 │
-SMAP  ─┼─► agregación mensual ─► JSON ──►├─ Perfil del municipio
-SRTM  ─┤   por municipio                 ├─ Ranking de rotaciones
-Suelo ─┘                                 ├─ Panel "¿por qué?"
-                                         └─ Escenarios climáticos
+Clic en el globo (lat, lon)
+        │
+        ▼
+┌─────────────────────────────────────────┐
+│ NASA POWER  ──► temperatura, lluvia     │
+│ SoilGrids   ──► textura, pH, MO, CIC    │
+│ Geocodificador ──► nombre del lugar     │
+└─────────────────────────────────────────┘
+        │
+        ▼
+Motor determinista: agua · temperatura · suelo · riesgo
+        │
+        ▼
+Viabilidad 0–100 + limitantes + rotaciones recomendadas
 ```
 
-El procesamiento pesado se ejecuta **fuera del navegador**. El cliente solo recibe
-agregados pequeños y aplica un motor de reglas determinista, por lo que la respuesta es
-instantánea y el resultado es auditable.
+No hay backend ni base de datos: el navegador consulta las APIs públicas (CORS abierto)
+y calcula todo en el cliente en pocos milisegundos.
 
 ---
 
@@ -134,10 +114,9 @@ instantánea y el resultado es auditable.
 
 | Lenguaje | Uso |
 |---|---|
-| **TypeScript** | Aplicación web, motor de decisión y tipos de datos |
-| **Node.js (ESM)** | Pipeline de datos: NASA POWER y agregados |
-| **CSS** | Sistema de diseño con variables (Tailwind v4) |
-| **Shell / PowerShell** | Scripts de construcción y despliegue |
+| **TypeScript** | Aplicación, motor agronómico y acceso a datos |
+| **Node.js (ESM)** | Script de datos regionales (`npm run data`) |
+| **CSS** | Sistema de diseño con Tailwind v4 |
 
 ### Frontend
 
@@ -145,29 +124,22 @@ instantánea y el resultado es auditable.
 |---|---|
 | **React 19** | Interfaz de usuario |
 | **Vite 6** | Empaquetado y desarrollo |
-| **MapLibre GL JS 5** | Mapa vectorial acelerado por GPU |
-| **Tailwind CSS v4** | Estilos y sistema de diseño |
-| **Zustand** | Estado global (municipio, prioridades, escenario) |
-| **TanStack Query** | Carga y caché de datos |
-| **i18next + react-i18next** | Interfaz bilingüe español / inglés |
+| **MapLibre GL JS 5** | Globo 3D y render vectorial por GPU |
+| **Tailwind CSS v4** | Estilos y tokens de diseño |
+| **Zustand** | Estado global (punto, cultivo, prioridades, escenario) |
+| **TanStack Query** | Caché de consultas por coordenada |
+| **i18next + react-i18next** | Interfaz bilingüe |
+| **lucide-react** | Iconografía |
 | **vite-plugin-pwa** | Funcionamiento sin conexión |
 | **Vitest** | Pruebas del motor y de las traducciones |
-
-### Datos y geoespecial
-
-| Herramienta | Función |
-|---|---|
-| **Node.js 22** | Consulta de NASA POWER y generación de agregados |
-| **mapshaper** | Simplificación de límites (GeoJSON) |
-| **fetch nativo** | Consumo de APIs |
 
 ### Infraestructura
 
 | Herramienta | Función |
 |---|---|
-| **GitHub Pages** | Hospedaje estático en CDN global (rama `gh-pages`, sin servidor) |
-| **Git + GitHub** | Control de versiones |
-| **VS Code** | Entorno de desarrollo |
+| **Vercel** | Hospedaje estático en CDN global |
+| **GitHub** | Control de versiones |
+| **GitHub Pages** | Despliegue de respaldo |
 
 **No se usa:** backend propio, base de datos, Docker ni servicios de pago.
 
@@ -177,15 +149,15 @@ instantánea y el resultado es auditable.
 
 | Componente | Mínimo | Recomendado |
 |---|---|---|
-| CPU | 4 núcleos | 6 núcleos o más |
+| CPU | 4 núcleos | 6 núcleos |
 | RAM | 8 GB | 16 GB |
-| Disco | 2 GB libres | 10 GB (datos crudos) |
 | GPU | Integrada | Con WebGL2 |
+| Disco | 1 GB libre | 5 GB |
 
 **Para usar RotaSmart**
 
 Cualquier navegador moderno (Chrome, Edge, Firefox, Safari) en computador o celular.
-Solo requiere WebGL2 y conexión a internet la primera vez. No requiere instalación.
+Requiere WebGL2 y conexión a internet para consultar NASA POWER.
 
 ---
 
@@ -194,15 +166,17 @@ Solo requiere WebGL2 y conexión a internet la primera vez. No requiere instalac
 ```text
 rotasmart/
 ├─ src/
-│  ├─ app/          aplicación, rutas y tema
-│  ├─ map/          mapa, capas NASA GIBS y coropleto
-│  ├─ features/     selección, perfil, rotaciones, escenarios, explicación
-│  ├─ engine/       motor de puntuación y escenarios
-│  ├─ data/         hooks de carga de datos
-│  └─ ui/           componentes y tokens de diseño
-├─ public/data/     agregados JSON y límites geográficos
-├─ scripts/         pipeline de datos (NASA POWER → JSON)
+│  ├─ app/          composición de la aplicación (App.tsx)
+│  ├─ components/   globo, ubicación, cultivo, viabilidad, sitio, rotaciones
+│  ├─ engine.ts     motor agronómico: viabilidad y rotaciones
+│  ├─ site.ts       consulta a NASA POWER, SoilGrids y geocodificación
+│  ├─ i18n/         traducciones español / inglés
+│  ├─ store.ts      estado global
+│  └─ index.css     sistema de diseño
+├─ public/          activos estáticos (icono)
+├─ scripts/         pipeline regional opcional (NASA POWER → JSON)
 ├─ tests/           pruebas del motor y de i18n
+├─ vercel.json      cabeceras de seguridad y caché
 ├─ CREDITS.md       fuentes, licencias y atribuciones
 └─ README.md
 ```
@@ -212,82 +186,50 @@ rotasmart/
 ## 8. Ejecución local
 
 ```bash
-# 1. Dependencias
 npm install
-
-# 2. Desarrollo
 npm run dev
-
-# 3. Pruebas
-npm run test
-
-# 4. Construcción
-npm run build
 ```
 
 ```bash
-# Pipeline de datos (opcional: regenera public/data desde NASA POWER)
-npm run data
+npm run test     # pruebas
+npm run build    # producción
+npm run data     # regenerar los JSON regionales del Huila (opcional)
 ```
-
-Requiere conexión a internet. El script consulta la API de NASA POWER para los
-37 municipios del Huila y escribe un JSON compacto por municipio.
 
 ---
 
 ## 9. Despliegue
 
-**Producción (recomendado): Vercel** — <https://rotasmart-kappa.vercel.app/>
+**Producción:** <https://rotasmart-kappa.vercel.app/>
 
 ```bash
 npm run build
 vercel --prod
 ```
 
-Incluye `vercel.json` con HSTS, `X-Content-Type-Options`, `X-Frame-Options`,
+`vercel.json` aplica HSTS, `X-Content-Type-Options`, `X-Frame-Options`,
 `Referrer-Policy`, `Permissions-Policy` y caché inmutable para `/assets` y `/data`.
-
-**Respaldo: GitHub Pages** desde la rama `gh-pages`.
-
-```bash
-# La compilación para Pages usa la ruta base /RotaSmart/
-$env:GITHUB_ACTIONS="true"; npm run build
-git subtree push --prefix dist origin gh-pages
-```
 
 ---
 
-## 10. Rendimiento objetivo
+## 10. Rendimiento
 
 | Métrica | Objetivo |
 |---|---|
 | Carga inicial (interfaz) | < 1,2 s |
-| Mapa interactivo | < 2 s en primera visita |
-| Cambio de municipio | < 100 ms |
-| Actualización de escenario | < 16 ms |
+| Globo interactivo | < 2 s en primera visita |
+| Consulta de un punto (NASA POWER) | 0,8–1,5 s |
+| Recálculo al cambiar cultivo o prioridad | < 16 ms |
 
 ---
 
-## 10. Atribución y buenas prácticas
+## 11. Atribución
 
 - Proyecto **independiente**: no está afiliado ni respaldado por la NASA.
-- **No se utilizan logos, banderas ni identificadores de misión de la NASA.** La
-  atribución se hace por texto.
-- Todos los datos, librerías, fuentes tipográficas e imágenes se documentan con enlace y
-  licencia en [`CREDITS.md`](CREDITS.md).
-- El uso de herramientas de inteligencia artificial se declara en el formulario oficial
-  del reto.
+- **No se utilizan logos, banderas ni identificadores de misión de la NASA.**
+- Todos los datos, librerías y fuentes se documentan en [`CREDITS.md`](CREDITS.md).
+- El uso de herramientas de inteligencia artificial se declara en el formulario oficial.
 
 ---
 
-## 11. Enlaces
-
-- Reto: <https://www.spaceappschallenge.org/2026/challenges/adapting-farms-with-nasa-data/>
-- NASA POWER: <https://power.larc.nasa.gov/>
-- NASA GIBS: <https://nasa.github.io/nasa-gibs/>
-- NASA SMAP: <https://smap.jpl.nasa.gov/>
-- NASA GPM: <https://gpm.nasa.gov/>
-
----
-
-**RotaSmart** — *evidencia para cada rotación.*
+**RotaSmart** — *evidencia para cada decisión.*

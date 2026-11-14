@@ -68,3 +68,39 @@
 .maplibregl-ctrl-attrib {
   font-size: 10px;
 }
+
+/* marcador del globo */
+.rs-marker {
+  position: relative;
+  width: 22px;
+  height: 22px;
+}
+.rs-marker-dot {
+  position: absolute;
+  inset: 7px;
+  border-radius: 999px;
+  background: #c77d13;
+  box-shadow: 0 0 0 2px #fff;
+}
+.rs-marker-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid rgba(199, 125, 19, 0.8);
+  animation: rs-pulse 2s ease-out infinite;
+}
+@keyframes rs-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rs-marker-ring {
+    animation: none;
+  }
+}

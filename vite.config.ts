@@ -39,6 +39,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,json}"],
+        globIgnores: ["data/**"],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/gibs\.earthdata\.nasa\.gov\/.*/i,

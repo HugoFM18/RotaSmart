@@ -1,23 +1,63 @@
 {
   "app": {
     "name": "RotaSmart",
-    "tagline": "Evidencia para cada rotación"
+    "tagline": "Viabilidad de cultivos con datos de NASA"
   },
   "header": {
     "challenge": "NASA Space Apps 2026",
     "badge": "Datos de NASA"
   },
-  "loading": "Cargando datos…",
-  "error": "No se pudieron cargar los datos.",
-  "select": {
-    "label": "Municipio",
-    "placeholder": "Selecciona un municipio",
-    "count": "37 municipios del Huila"
+  "loading": "Consultando datos de NASA…",
+  "error": "No se pudieron obtener los datos de este punto. Prueba en otro lugar.",
+  "location": {
+    "title": "Ubicación",
+    "hint": "Haz clic en cualquier parte del globo o busca un lugar.",
+    "search": "Buscar un lugar",
+    "searchPlaceholder": "Ej. Pitalito, Colombia",
+    "noResults": "Sin resultados",
+    "lat": "Latitud",
+    "lon": "Longitud",
+    "soilReal": "Suelo: SoilGrids",
+    "soilEstimated": "Suelo: estimado"
   },
-  "climate": {
-    "title": "Perfil agroclimático",
+  "crop": {
+    "title": "¿Qué cultivo tienes?",
+    "hint": "Elige el cultivo que siembras hoy y revisamos si es viable aquí.",
+    "label": "Cultivo actual"
+  },
+  "viability": {
+    "title": "Viabilidad del cultivo",
+    "score": "Viabilidad",
+    "verdict": {
+      "high": "Viable",
+      "medium": "Viable con manejo",
+      "low": "Riesgo alto",
+      "none": "No recomendado"
+    },
+    "factors": {
+      "water": "Agua",
+      "temperature": "Temperatura",
+      "soil": "Suelo",
+      "risk": "Riesgo"
+    },
+    "limits": "Factores limitantes"
+  },
+  "limits": {
+    "water_low": "Déficit hídrico: el cultivo necesita más agua de la que llueve.",
+    "temp_high": "La temperatura media supera el rango óptimo del cultivo.",
+    "temp_low": "La temperatura media está por debajo del rango óptimo.",
+    "frost": "Hay meses con riesgo de helada para este cultivo.",
+    "soil_ph": "El pH del suelo está fuera del rango ideal.",
+    "soil_texture": "La textura del suelo no es la más adecuada.",
+    "soil_om": "La materia orgánica del suelo es baja.",
+    "risk": "Riesgo climático elevado: sequía, calor o erosión."
+  },
+  "site": {
+    "title": "Datos del sitio",
+    "tmax": "Temp. máxima",
+    "tmin": "Temp. mínima",
+    "tmean": "Temp. media",
     "rain": "Lluvia anual",
-    "temp": "Temperatura media",
     "et0": "Evapotranspiración",
     "aridity": "Índice de aridez",
     "chartTitle": "Ciclo anual",
@@ -26,17 +66,13 @@
     "trendTitle": "Tendencia 2005–2024",
     "trendTemp": "Temperatura",
     "trendPpt": "Lluvia anual",
-    "perDecade": "por década"
-  },
-  "hazards": {
-    "title": "Riesgos climáticos",
+    "perDecade": "por década",
+    "hazards": "Riesgos climáticos",
     "frost": "Helada",
     "heat": "Estrés térmico",
     "drought": "Sequía",
-    "erosivity": "Erosividad"
-  },
-  "soil": {
-    "title": "Suelo estimado",
+    "erosivity": "Erosividad",
+    "soil": "Suelo",
     "clay": "Arcilla",
     "sand": "Arena",
     "om": "Materia orgánica",
@@ -45,7 +81,7 @@
   },
   "priorities": {
     "title": "Mis prioridades",
-    "hint": "Ajusta lo que más te importa y el ranking se reordena al instante.",
+    "hint": "Ajusta lo que más te importa y las rotaciones se reordenan.",
     "water": "Agua",
     "income": "Ingreso",
     "risk": "Riesgo",
@@ -61,10 +97,8 @@
   },
   "ranking": {
     "title": "Rotaciones recomendadas",
-    "subtitle": "Ordenadas según tus prioridades",
-    "best": "Mejor opción",
-    "why": "¿Por qué?",
-    "score": "Puntaje"
+    "subtitle": "Mejores secuencias para este sitio",
+    "best": "Mejor opción"
   },
   "why": {
     "water_high": "Buen equilibrio hídrico: la demanda del ciclo cabe en la lluvia disponible.",
@@ -78,15 +112,9 @@
     "labor": "Requiere poca mano de obra."
   },
   "map": {
-    "layers": "Capas satelitales",
-    "none": "Ninguna",
-    "ndvi": "Vegetación (NDVI)",
-    "precip": "Precipitación",
-    "temp": "Temperatura",
-    "legend": "Estrés hídrico",
-    "low": "Bajo",
-    "high": "Alto",
-    "hint": "Haz clic en un municipio"
+    "hint": "Haz clic en el globo para analizar un punto",
+    "reset": "Ver el globo",
+    "selected": "Punto seleccionado"
   },
   "crops": {
     "maiz": "Maíz",
@@ -111,7 +139,7 @@
     "r8": "Sorgo → Fríjol → Cobertura"
   },
   "footer": {
-    "source": "Datos: NASA POWER 2005–2024 · NASA GIBS · Suelo estimado a partir del clima",
+    "source": "Datos: NASA POWER 2005–2024 · SoilGrids (ISRIC) · NASA Blue Marble",
     "disclaimer": "Herramienta de apoyo. No reemplaza el criterio del agricultor ni del agrónomo.",
     "independent": "Proyecto independiente. No afiliado ni respaldado por NASA."
   }
