@@ -121,7 +121,8 @@
     "zoom": "Zoom",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "resetView": "Full view"
+    "resetView": "Full view",
+    "detail2d": "See detail in 2D"
   },
   "crops": {
     "maiz": "Maize",

@@ -13,7 +13,7 @@ export function GlobeView() {
 
   return (
     <div className="relative h-full w-full bg-[#0B1220]">
-      {mode === "globe" ? <Globe3D /> : <FlatMap />}
+      {mode === "globe" ? <Globe3D onRequestFlat={() => setMode("flat")} /> : <FlatMap />}
 
       <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-[250px] rounded-xl border border-white/15 bg-black/45 px-3 py-2 text-bone backdrop-blur">
         <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/70">

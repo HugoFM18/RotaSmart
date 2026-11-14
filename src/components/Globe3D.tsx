@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { geoOrthographic, geoPath, geoGraticule, geoDistance, geoArea } from "d3-geo";
 import { feature } from "topojson-client";
 import { Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
@@ -12,19 +12,19 @@ function loadGlobe(): Promise<any> {
     const base = import.meta.env.BASE_URL;
     globePromise = Promise.all([
       fetch(`${base}data/globe.json`).then((r) => r.json()),
-      // Los países vienen del TopoJSON de world-atlas: es el que d3-geo
-      // interpreta correctamente sin tocar la orientación de los anillos.
-      fetch(`${base}data/countries-50m.json`)
+      // Países desde world-atlas (TopoJSON): orientación correcta para d3-geo
+      // y ~10k puntos, lo que mantiene el arrastre fluido.
+      fetch(`${base}data/world-110m.json`)
         .then((r) => r.json())
-        .then((topo) => ({ countries: feature(topo, topo.objects.countries) })),
+        .then((topo) => feature(topo, topo.objects.countries)),
     ])
-      .then(([layers, world]) => ({ ...layers, countries: world.countries }))
+      .then(([layers, countries]) => ({ ...layers, countries }))
       .catch(() => null);
   }
   return globePromise;
 }
 
-/* Paleta editorial: tierra hueso sobre océano azul profundo */
+/* Paleta editorial: tierra hueso sobre ocÃ©ano azul profundo */
 const OCEAN_from = "#1D3E5E";
 const OCEAN_to = "#0A1826";
 const LAND = "#EDE7D8";
@@ -40,9 +40,9 @@ const LABEL = "#2A2418";
 const LABEL_HALO = "rgba(255,252,242,0.92)";
 
 const MIN_ZOOM = 1;
-const MAX_ZOOM = 22;
+const MAX_ZOOM = 8;
 
-export function Globe3D() {
+export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
   const { t } = useTranslation();
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef(0);
@@ -89,8 +89,8 @@ export function Globe3D() {
   const cx = size.w / 2;
   const cy = size.h / 2;
 
-  /* La proyección NO depende del zoom: el zoom es un transform SVG.
-     Así acercar/alejar es instantáneo y no recalcula la geometría. */
+  /* La proyecciÃ³n NO depende del zoom: el zoom es un transform SVG.
+     AsÃ­ acercar/alejar es instantÃ¡neo y no recalcula la geometrÃ­a. */
   const projection = useMemo(
     () =>
       geoOrthographic()
@@ -116,8 +116,8 @@ export function Globe3D() {
     };
   }, [data, path, zoom]);
 
-  /* Nominatim devuelve anillos en convención RFC 7946; d3-geo usa la esférica
-     (opuesta). Si el área supera media esfera, invertimos los anillos. */
+  /* Nominatim devuelve anillos en convenciÃ³n RFC 7946; d3-geo usa la esfÃ©rica
+     (opuesta). Si el Ã¡rea supera media esfera, invertimos los anillos. */
   const areaFeature = useMemo(() => {
     if (!polygon) return null;
     const geometry = JSON.parse(JSON.stringify(polygon));
@@ -146,11 +146,11 @@ export function Globe3D() {
     [areaFeature, path],
   );
 
-  /* ciudades visibles, con etiquetas según el nivel de zoom */
+  /* ciudades visibles, con etiquetas segÃºn el nivel de zoom */
   const cityPoints = useMemo(() => {
     if (!data?.cities) return [];
     const center: [number, number] = [-rotation[0], -rotation[1]];
-    const minPop = zoom > 6 ? 150000 : zoom > 2.5 ? 700000 : 2500000;
+    const minPop = zoom > 5 ? 80000 : zoom > 2.5 ? 700000 : 2500000;
     return data.cities.features
       .filter((f: any) => (f.properties.pop ?? 0) >= minPop)
       .map((f: any) => {
@@ -182,7 +182,7 @@ export function Globe3D() {
     return { x: cx + (p[0] - cx) * zoom, y: cy + (p[1] - cy) * zoom };
   }, [projection, lon, lat, rotation, zoom, cx, cy]);
 
-  /* rotación con raF para no saturar el hilo */
+  /* rotaciÃ³n con raF para no saturar el hilo */
   const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const d = dragRef.current;
     if (!d) return;
@@ -258,34 +258,41 @@ export function Globe3D() {
           </clipPath>
         </defs>
 
-        {/* atmósfera */}
+        {/* atmÃ³sfera */}
         <circle cx={cx} cy={cy} r={radius + 16} fill="url(#g-halo)" />
 
         {shapes && (
           <>
-            {/* océano base */}
+            {/* ocÃ©ano base */}
             <path d={shapes.sphere} fill="url(#g-ocean)" />
 
             <g clipPath="url(#g-sphere)">
               {/* todo el contenido se escala con un transform: el zoom no recalcula nada */}
               <g transform={`translate(${cx} ${cy}) scale(${zoom}) translate(${-cx} ${-cy})`}>
-                {/* retícula */}
+                {/* retÃ­cula */}
                 <path d={shapes.graticule} fill="none" stroke={GRAT_OCEAN} strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
 
                 {/* tierra y lagos con evenodd: el relleno no depende del sentido de los anillos */}
-                <path d={shapes.countries} fill={LAND} fillRule="evenodd" stroke="none" strokeLinejoin="round" />
-                <path d={shapes.lakes} fill={LAKE} fillRule="evenodd" stroke="none" />
+                <path d={shapes.countries} fill={LAND} stroke="none" strokeLinejoin="round" />
+                <path d={shapes.lakes} fill={LAKE} stroke="none" />
 
-                {/* ríos y retícula de tierra */}
-                <path d={shapes.rivers} fill="none" stroke={RIVER} strokeWidth={1} vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                {/* rÃ­os y retÃ­cula de tierra */}
+                <path d={shapes.rivers} fill="none" stroke={RIVER} strokeWidth={Math.min(1.8, 0.7 + zoom * 0.09)} vectorEffect="non-scaling-stroke" strokeLinecap="round" />
                 <path d={shapes.graticule} fill="none" stroke={GRAT_LAND} strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
 
-                {/* límites de países siempre; subdivisiones solo al acercar
+                {/* lÃ­mites de paÃ­ses siempre; subdivisiones solo al acercar
                     (el conjunto de subdivisiones es incompleto a escala mundial) */}
                 {zoom > 2.5 && (
                   <path d={shapes.admin1} fill="none" stroke={ADMIN_STROKE} strokeWidth={0.7} vectorEffect="non-scaling-stroke" />
                 )}
-                <path d={shapes.countries} fill="none" stroke={LAND_STROKE} strokeWidth={1} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+                <path
+                  d={shapes.countries}
+                  fill="none"
+                  stroke={LAND_STROKE}
+                  strokeWidth={Math.min(1.9, 0.85 + zoom * 0.11)}
+                  vectorEffect="non-scaling-stroke"
+                  strokeLinejoin="round"
+                />
 
                 {areaPath && (
                   <path
@@ -300,7 +307,7 @@ export function Globe3D() {
                 )}
               </g>
 
-              {/* sombreado de limbo: da volumen esférico a cualquier zoom */}
+              {/* sombreado de limbo: da volumen esfÃ©rico a cualquier zoom */}
               <circle cx={cx} cy={cy} r={radius} fill="url(#g-shade)" pointerEvents="none" />
             </g>
 
@@ -309,7 +316,7 @@ export function Globe3D() {
           </>
         )}
 
-        {/* ciudades y etiquetas: tamaño constante en pantalla */}
+        {/* ciudades y etiquetas: tamaÃ±o constante en pantalla */}
         {cityPoints.map((c: any, i: number) => (
           <g key={`${c.name}-${i}`}>
             <circle cx={c.x} cy={c.y} r={c.r} fill="#2A2A24" stroke={LABEL} strokeWidth={0.7} />
@@ -364,6 +371,18 @@ export function Globe3D() {
       <div className="pointer-events-none absolute bottom-4 right-3 z-10 rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-white/55 backdrop-blur">
         {t("map.zoom")} ×{zoom.toFixed(zoom < 10 ? 1 : 0)}
       </div>
+
+      {/* al acercar, ofrecer el detalle real del mapa 2D */}
+      {zoom >= 4.5 && onRequestFlat && (
+        <button
+          type="button"
+          onClick={onRequestFlat}
+          className="absolute bottom-14 left-1/2 z-10 -translate-x-1/2 rounded-full border border-harvest/40 bg-[#1a1408]/70 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-harvest backdrop-blur transition-colors hover:bg-harvest/20"
+        >
+          {t("map.detail2d")}
+        </button>
+      )}
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
-/**
- * Genera public/data/globe.json  (geometría estática del globo)
+﻿/**
+ * Genera public/data/globe.json  (geometrÃ­a estÃ¡tica del globo)
  *
  * Descarga Natural Earth 50m, recorta propiedades y simplifica con mapshaper.
  * Se ejecuta UNA VEZ en el desarrollo; la app no usa ninguna API de mapas.
@@ -25,7 +25,7 @@ fs.mkdirSync(TMP, { recursive: true });
 async function download(url, name) {
   const dest = path.join(TMP, name);
   if (fs.existsSync(dest) && fs.statSync(dest).size > 1000) return dest;
-  process.stdout.write(`  ↓ ${name} ... `);
+  process.stdout.write(`  â†“ ${name} ... `);
   const res = await fetch(url, { headers: { "User-Agent": UA } });
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   const buf = Buffer.from(await res.arrayBuffer());
@@ -42,7 +42,7 @@ function trim(src, out, mapper) {
   return out;
 }
 
-/** Simplifica y reduce la precisión decimal para achicar el archivo. */
+/** Simplifica y reduce la precisiÃ³n decimal para achicar el archivo. */
 function simplify(input, output, percent, precision = 5) {
   execFileSync(
     "npx",
@@ -58,11 +58,11 @@ const pick = (p, keys) => {
 };
 
 /**
- * d3-geo usa convención esférica: si el anillo va en el sentido equivocado,
- * el polígono se interpreta como "todo el planeta menos ese interior".
- * Cada fuente (world-atlas vs Natural Earth) viene distinto, así que no
- * asumimos ninguna convención: probamos con el centroide de cada polígono
- * usando geoContains y revertimos los anillos solo cuando no se contiene a sí mismo.
+ * d3-geo usa convenciÃ³n esfÃ©rica: si el anillo va en el sentido equivocado,
+ * el polÃ­gono se interpreta como "todo el planeta menos ese interior".
+ * Cada fuente (world-atlas vs Natural Earth) viene distinto, asÃ­ que no
+ * asumimos ninguna convenciÃ³n: probamos con el centroide de cada polÃ­gono
+ * usando geoContains y revertimos los anillos solo cuando no se contiene a sÃ­ mismo.
  */
 function ensureWinding(fc) {
   let fixed = 0;
@@ -73,8 +73,8 @@ function ensureWinding(fc) {
     if (!polys) continue;
 
     for (const poly of polys) {
-      // criterion idéntico al que usa d3-geo para decidir el interior:
-      // si el área esférica supera media esfera, el anillo está invertido.
+      // criterion idÃ©ntico al que usa d3-geo para decidir el interior:
+      // si el Ã¡rea esfÃ©rica supera media esfera, el anillo estÃ¡ invertido.
       const probe = { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: poly } };
       if (geoArea(probe) > Math.PI * 2) {
         for (const ring of poly) ring.reverse();
@@ -84,16 +84,104 @@ function ensureWinding(fc) {
   }
   return fixed;
 }
+/**
+ * Douglas-Peucker: reduce puntos sin alterar el orden de los anillos
+ * (mapshaper reescribe el winding y eso rompe el relleno con d3-geo).
+ */
+function simplifyRing(points, tol) {
+  const n = points.length;
+  if (n < 5) return points;
+  const sq = tol * tol;
+  const keep = new Uint8Array(n);
+  keep[0] = 1;
+  keep[n - 1] = 1;
+  const stack = [[0, n - 1]];
+
+  while (stack.length) {
+    const [a, b] = stack.pop();
+    const [xa, ya] = points[a];
+    const [xb, yb] = points[b];
+    const dx = xb - xa;
+    const dy = yb - ya;
+    const len2 = dx * dx + dy * dy;
+    let maxD = sq;
+    let idx = -1;
+
+    for (let i = a + 1; i < b; i++) {
+      const [xp, yp] = points[i];
+      let d;
+      if (len2 === 0) {
+        const ex = xp - xa;
+        const ey = yp - ya;
+        d = ex * ex + ey * ey;
+      } else {
+        const t = Math.max(0, Math.min(1, ((xp - xa) * dx + (yp - ya) * dy) / len2));
+        const ex = xp - (xa + t * dx);
+        const ey = yp - (ya + t * dy);
+        d = ex * ex + ey * ey;
+      }
+      if (d > maxD) {
+        maxD = d;
+        idx = i;
+      }
+    }
+    if (idx >= 0) {
+      keep[idx] = 1;
+      stack.push([a, idx], [idx, b]);
+    }
+  }
+  return points.filter((_, i) => keep[i]);
+}
+
+function simplifyGeometry(geometry, tol) {
+  if (!geometry) return geometry;
+  const fix = (ring) => {
+    const r = simplifyRing(ring, tol);
+    return r.length >= 4 ? r : ring;
+  };
+  if (geometry.type === "Polygon") {
+    geometry.coordinates = geometry.coordinates.map(fix);
+  } else if (geometry.type === "MultiPolygon") {
+    geometry.coordinates = geometry.coordinates.map((poly) => poly.map(fix));
+  } else if (geometry.type === "LineString") {
+    geometry.coordinates = fix(geometry.coordinates);
+  } else if (geometry.type === "MultiLineString") {
+    geometry.coordinates = geometry.coordinates.map(fix);
+  }
+  return geometry;
+}
+
+function simplifyCollection(fc, tol) {
+  let before = 0;
+  let after = 0;
+  const count = (g) => {
+    let n = 0;
+    const walk = (c) => {
+      if (typeof c[0] === "number") n += 1;
+      else c.forEach(walk);
+    };
+    walk(g.coordinates);
+    return n;
+  };
+  for (const f of fc.features) {
+    if (!f.geometry) continue;
+    before += count(f.geometry);
+    simplifyGeometry(f.geometry, tol);
+    after += count(f.geometry);
+  }
+  return { before, after };
+}
+
 const feat = (properties, geometry) => ({ type: "Feature", properties, geometry });
 
-console.log("Descargando fuentes 50m…");
+console.log("Descargando fuentes 50mâ€¦");
 const countriesRaw = await download(ATLAS + "countries-50m.json", "countries-50m.json");
 const adminRaw = await download(NE + "ne_50m_admin_1_states_provinces.geojson", "admin-raw.geojson");
 const riversRaw = await download(NE + "ne_50m_rivers_lake_centerlines.geojson", "rivers-raw.geojson");
 const lakesRaw = await download(NE + "ne_50m_lakes.geojson", "lakes-raw.geojson");
 const citiesRaw = await download(NE + "ne_50m_populated_places.geojson", "cities-raw.geojson");
 
-console.log("Recortando propiedades…");
+console.log("Recortando propiedadesâ€¦");
 {
   // world-atlas viene en TopoJSON: se convierte a GeoJSON con topojson-client
   const topo = JSON.parse(fs.readFileSync(countriesRaw, "utf8"));
@@ -127,8 +215,7 @@ const citiesTrimmed = path.join(TMP, "cities.geojson");
   console.log(`  cities.geojson: ${features.length} features`);
 }
 
-console.log("Simplificando geometría…");
-simplify(path.join(TMP, "countries.geojson"), path.join(TMP, "s-countries.geojson"), 12);
+console.log("Simplificando geometrÃ­aâ€¦");
 simplify(path.join(TMP, "admin1.geojson"), path.join(TMP, "s-admin1.geojson"), 8);
 simplify(path.join(TMP, "rivers.geojson"), path.join(TMP, "s-rivers.geojson"), 4);
 simplify(path.join(TMP, "lakes.geojson"), path.join(TMP, "s-lakes.geojson"), 4);
@@ -146,8 +233,13 @@ const load = (p) => {
   return fc;
 };
 
+// PaÃ­ses: se decodifica el TopoJSON (orientaciÃ³n correcta) y se simplifica
+// con Douglas-Peucker, que solo elimina puntos.
+const countriesGj = JSON.parse(fs.readFileSync(path.join(TMP, "countries.geojson"), "utf8"));
+const cStats = simplifyCollection(countriesGj, 0.28);
+console.log(`  countries: ${cStats.before} â†’ ${cStats.after} puntos`);
+
 const globe = {
-  countries: load(path.join(TMP, "s-countries.geojson")),
   admin1: load(path.join(TMP, "s-admin1.geojson")),
   rivers: load(path.join(TMP, "s-rivers.geojson")),
   lakes: load(path.join(TMP, "s-lakes.geojson")),
@@ -160,5 +252,7 @@ fs.writeFileSync(OUT, JSON.stringify(globe));
 for (const [k, v] of Object.entries(globe)) {
   console.log(`  ${k}: ${v.features.length}`);
 }
-console.log(`\nglobo listo → public/data/globe.json (${(fs.statSync(OUT).size / 1024).toFixed(0)} KB)`);
-console.log("  ¿Huila?", globe.admin1.features.some((f) => /huila/i.test(f.properties.name)));
+console.log(`\nglobo listo â†’ public/data/globe.json (${(fs.statSync(OUT).size / 1024).toFixed(0)} KB)`);
+console.log("  Â¿Huila?", globe.admin1.features.some((f) => /huila/i.test(f.properties.name)));
+
+

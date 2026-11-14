@@ -121,7 +121,8 @@
     "zoom": "Zoom",
     "zoomIn": "Acercar",
     "zoomOut": "Alejar",
-    "resetView": "Vista completa"
+    "resetView": "Vista completa",
+    "detail2d": "Ver detalle en 2D"
   },
   "crops": {
     "maiz": "Maíz",
