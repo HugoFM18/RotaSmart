@@ -10,7 +10,6 @@ import { PrioritiesCard } from "./components/PrioritiesCard";
 import { ScenarioCard } from "./components/ScenarioCard";
 import { RankingCard } from "./components/RankingCard";
 import { MapErrorBoundary } from "./components/MapErrorBoundary";
-import { FallbackMap } from "./components/FallbackMap";
 import { useStore } from "./store";
 import { evaluateAll, evaluateCrop } from "./engine";
 import { fetchSite, fetchPlace } from "./site";
@@ -95,7 +94,13 @@ export default function App() {
         </aside>
 
         <div className="relative order-1 h-[46vh] w-full lg:order-2 lg:h-auto lg:flex-1">
-          <MapErrorBoundary fallback={<FallbackMap />}>
+          <MapErrorBoundary
+            fallback={
+              <div className="grid h-full place-items-center bg-[#0B1220] px-6 text-center text-xs text-white/70">
+                {t("error")}
+              </div>
+            }
+          >
             <Suspense
               fallback={
                 <div className="grid h-full place-items-center bg-[#0B1220] text-xs text-white/60">

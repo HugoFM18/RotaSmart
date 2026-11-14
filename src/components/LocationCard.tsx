@@ -4,14 +4,21 @@ import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
 import { Section } from "./Section";
 
-type Hit = { display_name: string; lat: string; lon: string; name?: string };
+type Hit = {
+  display_name: string;
+  name?: string;
+  lat: string;
+  lon: string;
+  boundingbox?: [string, string, string, string];
+  geojson?: any;
+};
 
 export function LocationCard() {
   const { t, i18n } = useTranslation();
   const lat = useStore((s) => s.lat);
   const lon = useStore((s) => s.lon);
   const place = useStore((s) => s.place);
-  const focusPoint = useStore((s) => s.focusPoint);
+  const focusArea = useStore((s) => s.focusArea);
 
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
@@ -32,7 +39,8 @@ export function LocationCard() {
         const controller = new AbortController();
         abortRef.current = controller;
         const url =
-          `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(q)}` +
+          `https://nominatim.openstreetmap.org/search?format=json&limit=5` +
+          `&polygon_geojson=1&addressdetails=1&q=${encodeURIComponent(q)}` +
           `&accept-language=${i18n.resolvedLanguage ?? "es"}`;
         const res = await fetch(url, { signal: controller.signal });
         const json = (await res.json()) as Hit[];
@@ -47,7 +55,16 @@ export function LocationCard() {
   }, [query, i18n.resolvedLanguage]);
 
   const pick = (hit: Hit) => {
-    focusPoint(Number(hit.lat), Number(hit.lon), hit.display_name.split(",").slice(0, 3).join(","));
+    const bb = hit.boundingbox;
+    const bbox: [number, number, number, number] | null = bb
+      ? [Number(bb[0]), Number(bb[2]), Number(bb[1]), Number(bb[3])]
+      : null;
+    const geom =
+      hit.geojson && (hit.geojson.type === "Polygon" || hit.geojson.type === "MultiPolygon")
+        ? hit.geojson
+        : null;
+    const name = hit.display_name.split(",").slice(0, 3).join(",").trim();
+    focusArea(Number(hit.lat), Number(hit.lon), name, geom, bbox);
     setQuery("");
     setHits([]);
   };

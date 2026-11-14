@@ -35,6 +35,10 @@ del globo, elige tu cultivo y obtén su viabilidad** junto con los datos que la 
 ## 3. Características
 
 - **Globo 3D mundial** con proyección de globo de MapLibre y NASA Blue Marble.
+- **Respaldo automático de mapa base**: NASA GIBS → EOX Sentinel-2 → OpenStreetMap.
+- **Mapa 2D con Leaflet** para navegadores sin WebGL: zoom, arrastre y polígonos.
+- **Zoom al hacer clic**: cada clic centra y acerca a la zona seleccionada.
+- **Delimitación del municipio** en amarillo suave al buscarlo, con encuadre automático.
 - **Análisis bajo demanda** en cualquier coordenada del planeta.
 - **Buscador de lugares** con geocodificación inversa y directa.
 - **Viabilidad del cultivo** explicada en cuatro factores y factores limitantes.
@@ -125,6 +129,7 @@ y calcula todo en el cliente en pocos milisegundos.
 | **React 19** | Interfaz de usuario |
 | **Vite 6** | Empaquetado y desarrollo |
 | **MapLibre GL JS 5** | Globo 3D y render vectorial por GPU |
+| **Leaflet 1.9** | Mapa 2D de respaldo sin WebGL |
 | **Tailwind CSS v4** | Estilos y tokens de diseño |
 | **Zustand** | Estado global (punto, cultivo, prioridades, escenario) |
 | **TanStack Query** | Caché de consultas por coordenada |

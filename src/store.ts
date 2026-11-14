@@ -1,16 +1,26 @@
 import { create } from "zustand";
 import type { CropId, Priorities } from "./engine";
 
+export type BBox = [number, number, number, number]; // [sur, oeste, norte, este]
+
 type Store = {
   lat: number;
   lon: number;
   place: string | null;
+  polygon: any | null;
+  bbox: BBox | null;
   crop: CropId;
   priorities: Priorities;
   scenario: { rain: number; temp: number };
   flyToken: number;
   setPoint: (lat: number, lon: number) => void;
-  focusPoint: (lat: number, lon: number, place?: string | null) => void;
+  focusArea: (
+    lat: number,
+    lon: number,
+    place: string | null,
+    polygon: any | null,
+    bbox: BBox | null,
+  ) => void;
   setPlace: (place: string | null) => void;
   setCrop: (crop: CropId) => void;
   setPriority: (key: keyof Priorities, value: number) => void;
@@ -30,14 +40,16 @@ export const useStore = create<Store>((set) => ({
   lat: 2.9345,
   lon: -75.2809,
   place: "Neiva, Huila, Colombia",
+  polygon: null,
+  bbox: null,
   crop: "maiz",
   priorities: DEFAULT_PRIORITIES,
   scenario: { rain: 0, temp: 0 },
   flyToken: 0,
 
-  setPoint: (lat, lon) => set({ lat, lon }),
-  focusPoint: (lat, lon, place = null) =>
-    set((s) => ({ lat, lon, place, flyToken: s.flyToken + 1 })),
+  setPoint: (lat, lon) => set({ lat, lon, polygon: null, bbox: null }),
+  focusArea: (lat, lon, place, polygon, bbox) =>
+    set((s) => ({ lat, lon, place, polygon, bbox, flyToken: s.flyToken + 1 })),
   setPlace: (place) => set({ place }),
   setCrop: (crop) => set({ crop }),
   setPriority: (key, value) =>
