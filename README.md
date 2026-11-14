@@ -5,7 +5,9 @@
 > Reto: **"Cambio de rumbo: Adaptando las granjas con datos de la NASA"**
 > *(Field Shift: Adapting Farms with NASA Data — NASA Space Apps Challenge 2026)*
 
-**Demo en vivo:** <https://johncamilogarzonvargas.github.io/RotaSmart/>
+**Demo en vivo:** <https://rotasmart-kappa.vercel.app/>
+
+> Respaldo en GitHub Pages: <https://johncamilogarzonvargas.github.io/RotaSmart/>
 
 ---
 
@@ -235,21 +237,23 @@ Requiere conexión a internet. El script consulta la API de NASA POWER para los
 
 ## 9. Despliegue
 
-El sitio se publica con **GitHub Pages** desde la rama `gh-pages` (sin depender de
-GitHub Actions):
+**Producción (recomendado): Vercel** — <https://rotasmart-kappa.vercel.app/>
+
+```bash
+npm run build
+vercel --prod
+```
+
+Incluye `vercel.json` con HSTS, `X-Content-Type-Options`, `X-Frame-Options`,
+`Referrer-Policy`, `Permissions-Policy` y caché inmutable para `/assets` y `/data`.
+
+**Respaldo: GitHub Pages** desde la rama `gh-pages`.
 
 ```bash
 # La compilación para Pages usa la ruta base /RotaSmart/
 $env:GITHUB_ACTIONS="true"; npm run build
-```
-
-Luego se publica el contenido de `dist/` en la rama `gh-pages`:
-
-```bash
 git subtree push --prefix dist origin gh-pages
 ```
-
-**URL:** <https://johncamilogarzonvargas.github.io/RotaSmart/>
 
 ---
 

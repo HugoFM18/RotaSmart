@@ -50,3 +50,5 @@ yarn-error.log*
 # Builds temporales
 *.zip
 *.rar
+
+.vercel
