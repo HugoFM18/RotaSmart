@@ -22,6 +22,7 @@ type Store = {
     bbox: BBox | null,
   ) => void;
   setPlace: (place: string | null) => void;
+  setArea: (polygon: any | null, bbox: BBox | null, place: string | null) => void;
   setCrop: (crop: CropId) => void;
   setPriority: (key: keyof Priorities, value: number) => void;
   setScenario: (scenario: { rain: number; temp: number }) => void;
@@ -51,6 +52,8 @@ export const useStore = create<Store>((set) => ({
   focusArea: (lat, lon, place, polygon, bbox) =>
     set((s) => ({ lat, lon, place, polygon, bbox, flyToken: s.flyToken + 1 })),
   setPlace: (place) => set({ place }),
+  setArea: (polygon, bbox, place) =>
+    set((s) => ({ polygon, bbox, place, flyToken: s.flyToken + 1 })),
   setCrop: (crop) => set({ crop }),
   setPriority: (key, value) =>
     set((s) => ({ priorities: { ...s.priorities, [key]: value } })),

@@ -112,7 +112,7 @@
     "labor": "Requiere poca mano de obra."
   },
   "map": {
-    "hint": "Haz clic en el globo para analizar un punto",
+    "hint": "Haz clic en el mapa para delimitar la zona",
     "reset": "Ver el globo",
     "selected": "Punto seleccionado",
     "flat": "Ver mapa 2D",

@@ -38,6 +38,7 @@ del globo, elige tu cultivo y obtén su viabilidad** junto con los datos que la 
 - **Mapa 2D con Leaflet**: zoom, arrastre, polígonos y respaldo de tiles (OpenStreetMap → Esri).
 - **Alternancia 3D / 2D** con un botón.
 - **Zoom al hacer clic**: cada clic centra y acerca a la zona seleccionada.
+- **Delimitación automática de la zona**: al hacer clic o buscar, se dibuja el límite administrativo en amarillo suave y el mapa se ajusta a él. En el globo se delimita el departamento; en el mapa 2D, el municipio.
 - **Delimitación del municipio** en amarillo suave al buscarlo, con encuadre automático.
 - **Análisis bajo demanda** en cualquier coordenada del planeta.
 - **Buscador de lugares** con geocodificación inversa y directa.

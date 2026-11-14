@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from "d3-geo";
+import { geoOrthographic, geoPath, geoGraticule, geoDistance } from "d3-geo";
 import { feature } from "topojson-client";
 import { useStore } from "../store";
+import { pickLocation } from "../pick";
 
 let worldPromise: Promise<any> | null = null;
 
@@ -27,7 +28,6 @@ export function Globe3D() {
   const polygon = useStore((s) => s.polygon);
   const bbox = useStore((s) => s.bbox);
   const flyToken = useStore((s) => s.flyToken);
-  const setPoint = useStore((s) => s.setPoint);
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [size, setSize] = useState({ w: 800, h: 600 });
@@ -51,11 +51,15 @@ export function Globe3D() {
     return () => ro.disconnect();
   }, []);
 
-  /* centrar en el punto seleccionado */
+  /* centrar y ampliar en la zona seleccionada */
   useEffect(() => {
     if (flyToken === 0) return;
-    setRotation([-lon, -lat]);
-    setZoom(2.2);
+    const centerLon = bbox ? (bbox[1] + bbox[3]) / 2 : lon;
+    const centerLat = bbox ? (bbox[0] + bbox[2]) / 2 : lat;
+    const span = bbox ? Math.max(bbox[3] - bbox[1], bbox[2] - bbox[0]) : 6;
+    const target = Math.max(1.2, Math.min(48, 63 / Math.max(span, 0.02)));
+    setRotation([-centerLon, -centerLat]);
+    setZoom(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flyToken]);
 
@@ -74,7 +78,11 @@ export function Globe3D() {
   const path = useMemo(() => geoPath(projection), [projection]);
 
   const countriesPath = useMemo(() => (world ? path(world) ?? "" : ""), [world, path]);
-  const graticulePath = useMemo(() => path(geoGraticule10()) ?? "", [path]);
+  const graticulePath = useMemo(() => {
+    const step = zoom > 30 ? 0.25 : zoom > 10 ? 1 : 10;
+    return path(geoGraticule().step([step, step])()) ?? "";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path, zoom]);
   const spherePath = useMemo(() => path({ type: "Sphere" } as any) ?? "", [path]);
 
   const polyFeature = useMemo(
@@ -116,12 +124,12 @@ export function Globe3D() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const inv = projection.invert?.([x, y]);
-    if (inv) setPoint(inv[1], inv[0]);
+    if (inv) pickLocation(inv[1], inv[0], 6);
   };
 
   const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
     e.preventDefault();
-    setZoom((z) => Math.max(1, Math.min(9, z * (e.deltaY > 0 ? 0.88 : 1.14))));
+    setZoom((z) => Math.max(1, Math.min(48, z * (e.deltaY > 0 ? 0.86 : 1.16))));
   };
 
   return (
@@ -153,18 +161,19 @@ export function Globe3D() {
         <path d={spherePath} fill="url(#ocean)" />
         <path d={spherePath} fill="none" stroke="rgba(120,170,210,0.25)" strokeWidth={1} />
 
-        <path d={graticulePath} fill="none" stroke={GRAT} strokeWidth={0.6} />
-
         {countriesPath && (
           <path d={countriesPath} fill={LAND} stroke={LAND_STROKE} strokeWidth={0.4} />
         )}
 
+        <path d={graticulePath} fill="none" stroke={GRAT} strokeWidth={0.5} />
+
         {polyPath && (
           <path
             d={polyPath}
-            fill="rgba(250,204,21,0.22)"
-            stroke="#EAB308"
-            strokeWidth={1.4}
+            fill="rgba(255,213,79,0.22)"
+            stroke="#F0B429"
+            strokeWidth={2.5}
+            strokeLinejoin="round"
           />
         )}
 

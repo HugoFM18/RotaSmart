@@ -112,7 +112,7 @@
     "labor": "Requires little labor."
   },
   "map": {
-    "hint": "Click the globe to analyze a point",
+    "hint": "Click the map to outline the area",
     "reset": "View globe",
     "selected": "Selected point",
     "flat": "View 2D map",

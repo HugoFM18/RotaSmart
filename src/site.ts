@@ -233,3 +233,34 @@ export async function fetchPlace(lat: number, lon: number, lang: string) {
     return null;
   }
 }
+
+/** Límite administrativo que contiene el punto. zoom: 6 = departamento, 10 = municipio. */
+export async function fetchArea(lat: number, lon: number, lang: string, zoom = 10) {
+  try {
+    const url =
+      `https://nominatim.openstreetmap.org/reverse?format=json&zoom=${zoom}` +
+      `&polygon_geojson=1&addressdetails=1&lat=${lat}&lon=${lon}` +
+      `&accept-language=${lang}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const j = await res.json();
+
+    const g = j?.geojson;
+    const polygon =
+      g && (g.type === "Polygon" || g.type === "MultiPolygon") ? g : null;
+
+    const bb = j?.boundingbox as [string, string, string, string] | undefined;
+    const bbox: [number, number, number, number] | null = bb
+      ? [Number(bb[0]), Number(bb[2]), Number(bb[1]), Number(bb[3])]
+      : null;
+
+    const name =
+      typeof j?.display_name === "string"
+        ? j.display_name.split(",").slice(0, 3).join(",").trim()
+        : null;
+
+    return { polygon, bbox, name };
+  } catch {
+    return null;
+  }
+}

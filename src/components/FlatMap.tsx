@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useStore } from "../store";
+import { pickLocation } from "../pick";
 
 type TileProvider = { id: string; url: string; maxZoom: number; attribution: string };
 
@@ -42,10 +43,6 @@ export function FlatMap() {
   const polygon = useStore((s) => s.polygon);
   const bbox = useStore((s) => s.bbox);
   const flyToken = useStore((s) => s.flyToken);
-  const setPoint = useStore((s) => s.setPoint);
-
-  const setPointRef = useRef(setPoint);
-  setPointRef.current = setPoint;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -91,8 +88,7 @@ export function FlatMap() {
     ).addTo(map);
 
     map.on("click", (e: L.LeafletMouseEvent) => {
-      setPointRef.current(e.latlng.lat, e.latlng.lng);
-      map.flyTo(e.latlng, Math.max(map.getZoom(), 7), { duration: 0.9 });
+      pickLocation(e.latlng.lat, e.latlng.lng, 10);
     });
 
     mapRef.current = map;
@@ -118,11 +114,11 @@ export function FlatMap() {
     if (polygon) {
       areaRef.current = L.geoJSON(polygon, {
         style: {
-          color: "#EAB308",
+          color: "#F0B429",
           weight: 2.5,
-          opacity: 0.95,
-          fillColor: "#FACC15",
-          fillOpacity: 0.18,
+          opacity: 1,
+          fillColor: "#FFD54F",
+          fillOpacity: 0.22,
         },
       }).addTo(map);
     }
