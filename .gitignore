@@ -1,0 +1,50 @@
+# Documentación interna del evento (no se publica)
+Pautas/
+
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Datos crudos y pesados (se regeneran con python/)
+data/
+*.tif
+*.tiff
+*.nc
+*.hdf
+*.h5
+*.geojson
+!public/data/**/*.geojson
+
+# IDE y sistema
+.qodo/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Builds temporales
+*.zip
+*.rar
