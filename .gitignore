@@ -22,8 +22,8 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 
-# Datos crudos y pesados (se regeneran con python/)
-data/
+# Datos crudos y pesados (se regeneran con scripts/)
+/data/
 *.tif
 *.tiff
 *.nc
@@ -31,6 +31,8 @@ data/
 *.h5
 *.geojson
 !public/data/**/*.geojson
+
+# Los JSON agregados de public/data SÍ se publican
 
 # IDE y sistema
 .qodo/

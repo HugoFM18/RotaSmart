@@ -1,0 +1,118 @@
+{
+  "app": {
+    "name": "RotaSmart",
+    "tagline": "Evidence for every rotation"
+  },
+  "header": {
+    "challenge": "NASA Space Apps 2026",
+    "badge": "NASA data"
+  },
+  "loading": "Loading data…",
+  "error": "Data could not be loaded.",
+  "select": {
+    "label": "Municipality",
+    "placeholder": "Select a municipality",
+    "count": "37 municipalities in Huila"
+  },
+  "climate": {
+    "title": "Agro-climatic profile",
+    "rain": "Annual rainfall",
+    "temp": "Mean temperature",
+    "et0": "Evapotranspiration",
+    "aridity": "Aridity index",
+    "chartTitle": "Annual cycle",
+    "legendPpt": "Rainfall (mm/month)",
+    "legendTemp": "Temperature (°C)",
+    "trendTitle": "2005–2024 trend",
+    "trendTemp": "Temperature",
+    "trendPpt": "Annual rainfall",
+    "perDecade": "per decade"
+  },
+  "hazards": {
+    "title": "Climate hazards",
+    "frost": "Frost",
+    "heat": "Heat stress",
+    "drought": "Drought",
+    "erosivity": "Erosivity"
+  },
+  "soil": {
+    "title": "Estimated soil",
+    "clay": "Clay",
+    "sand": "Sand",
+    "om": "Organic matter",
+    "ph": "pH",
+    "cec": "CEC"
+  },
+  "priorities": {
+    "title": "My priorities",
+    "hint": "Adjust what matters most and the ranking updates instantly.",
+    "water": "Water",
+    "income": "Income",
+    "risk": "Risk",
+    "soil": "Soil",
+    "labor": "Labor"
+  },
+  "scenario": {
+    "title": "Climate scenario",
+    "rain": "Rainfall change",
+    "temp": "Temperature change",
+    "reset": "Reset",
+    "note": "Explore what would happen under a different climate."
+  },
+  "ranking": {
+    "title": "Recommended rotations",
+    "subtitle": "Ranked by your priorities",
+    "best": "Best option",
+    "why": "Why?",
+    "score": "Score"
+  },
+  "why": {
+    "water_high": "Good water balance: the crop's demand fits within available rainfall.",
+    "water_low": "Water deficit: the crop needs more water than the rainfall provides.",
+    "nitrogen": "Adds nitrogen and reduces fertilizer needs.",
+    "cover": "Keeps the soil covered and protects its structure.",
+    "pest": "Breaks pest cycles by alternating crop families.",
+    "erosion": "Low erosion risk thanks to ground cover.",
+    "resilience": "Tolerates drought and heat better.",
+    "income": "Generates additional income or forage.",
+    "labor": "Requires little labor."
+  },
+  "map": {
+    "layers": "Satellite layers",
+    "none": "None",
+    "ndvi": "Vegetation (NDVI)",
+    "precip": "Precipitation",
+    "temp": "Temperature",
+    "legend": "Water stress",
+    "low": "Low",
+    "high": "High",
+    "hint": "Click a municipality"
+  },
+  "crops": {
+    "maiz": "Maize",
+    "frijol": "Beans",
+    "yuca": "Cassava",
+    "sorgo": "Sorghum",
+    "cafe": "Coffee",
+    "platano": "Plantain",
+    "cobertura": "Cover crop",
+    "arroz": "Rice",
+    "cacao": "Cacao",
+    "pastura": "Pasture"
+  },
+  "rotations": {
+    "r1": "Maize → Beans → Cover crop",
+    "r2": "Beans → Maize → Sorghum",
+    "r3": "Coffee → Beans → Cover crop",
+    "r4": "Rice → Beans → Maize",
+    "r5": "Cassava → Beans → Cover crop",
+    "r6": "Plantain → Cacao → Cover crop",
+    "r7": "Pasture → Maize → Beans",
+    "r8": "Sorghum → Beans → Cover crop"
+  },
+  "footer": {
+    "source": "Data: NASA POWER 2005–2024 · NASA GIBS · Soil estimated from climate",
+    "disclaimer": "A support tool. It does not replace the farmer's or agronomist's judgment.",
+    "independent": "Independent project. Not affiliated with or endorsed by NASA."
+  }
+}

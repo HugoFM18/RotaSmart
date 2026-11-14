@@ -1,0 +1,118 @@
+{
+  "app": {
+    "name": "RotaSmart",
+    "tagline": "Evidencia para cada rotación"
+  },
+  "header": {
+    "challenge": "NASA Space Apps 2026",
+    "badge": "Datos de NASA"
+  },
+  "loading": "Cargando datos…",
+  "error": "No se pudieron cargar los datos.",
+  "select": {
+    "label": "Municipio",
+    "placeholder": "Selecciona un municipio",
+    "count": "37 municipios del Huila"
+  },
+  "climate": {
+    "title": "Perfil agroclimático",
+    "rain": "Lluvia anual",
+    "temp": "Temperatura media",
+    "et0": "Evapotranspiración",
+    "aridity": "Índice de aridez",
+    "chartTitle": "Ciclo anual",
+    "legendPpt": "Lluvia (mm/mes)",
+    "legendTemp": "Temperatura (°C)",
+    "trendTitle": "Tendencia 2005–2024",
+    "trendTemp": "Temperatura",
+    "trendPpt": "Lluvia anual",
+    "perDecade": "por década"
+  },
+  "hazards": {
+    "title": "Riesgos climáticos",
+    "frost": "Helada",
+    "heat": "Estrés térmico",
+    "drought": "Sequía",
+    "erosivity": "Erosividad"
+  },
+  "soil": {
+    "title": "Suelo estimado",
+    "clay": "Arcilla",
+    "sand": "Arena",
+    "om": "Materia orgánica",
+    "ph": "pH",
+    "cec": "CIC"
+  },
+  "priorities": {
+    "title": "Mis prioridades",
+    "hint": "Ajusta lo que más te importa y el ranking se reordena al instante.",
+    "water": "Agua",
+    "income": "Ingreso",
+    "risk": "Riesgo",
+    "soil": "Suelo",
+    "labor": "Mano de obra"
+  },
+  "scenario": {
+    "title": "Escenario climático",
+    "rain": "Cambio en lluvia",
+    "temp": "Cambio en temperatura",
+    "reset": "Restablecer",
+    "note": "Explora qué pasaría con un clima distinto."
+  },
+  "ranking": {
+    "title": "Rotaciones recomendadas",
+    "subtitle": "Ordenadas según tus prioridades",
+    "best": "Mejor opción",
+    "why": "¿Por qué?",
+    "score": "Puntaje"
+  },
+  "why": {
+    "water_high": "Buen equilibrio hídrico: la demanda del ciclo cabe en la lluvia disponible.",
+    "water_low": "Déficit hídrico: el cultivo demanda más agua de la que llueve.",
+    "nitrogen": "Aporta nitrógeno y reduce la necesidad de fertilizante.",
+    "cover": "Mantiene el suelo cubierto y protege su estructura.",
+    "pest": "Rompe el ciclo de plagas al alternar familias de cultivos.",
+    "erosion": "Bajo riesgo de erosión gracias a la cobertura.",
+    "resilience": "Tolera mejor la sequía y el calor.",
+    "income": "Genera ingreso o forraje adicional.",
+    "labor": "Requiere poca mano de obra."
+  },
+  "map": {
+    "layers": "Capas satelitales",
+    "none": "Ninguna",
+    "ndvi": "Vegetación (NDVI)",
+    "precip": "Precipitación",
+    "temp": "Temperatura",
+    "legend": "Estrés hídrico",
+    "low": "Bajo",
+    "high": "Alto",
+    "hint": "Haz clic en un municipio"
+  },
+  "crops": {
+    "maiz": "Maíz",
+    "frijol": "Fríjol",
+    "yuca": "Yuca",
+    "sorgo": "Sorgo",
+    "cafe": "Café",
+    "platano": "Plátano",
+    "cobertura": "Cobertura",
+    "arroz": "Arroz",
+    "cacao": "Cacao",
+    "pastura": "Pastura"
+  },
+  "rotations": {
+    "r1": "Maíz → Fríjol → Cobertura",
+    "r2": "Fríjol → Maíz → Sorgo",
+    "r3": "Café → Fríjol → Cobertura",
+    "r4": "Arroz → Fríjol → Maíz",
+    "r5": "Yuca → Fríjol → Cobertura",
+    "r6": "Plátano → Cacao → Cobertura",
+    "r7": "Pastura → Maíz → Fríjol",
+    "r8": "Sorgo → Fríjol → Cobertura"
+  },
+  "footer": {
+    "source": "Datos: NASA POWER 2005–2024 · NASA GIBS · Suelo estimado a partir del clima",
+    "disclaimer": "Herramienta de apoyo. No reemplaza el criterio del agricultor ni del agrónomo.",
+    "independent": "Proyecto independiente. No afiliado ni respaldado por NASA."
+  }
+}
