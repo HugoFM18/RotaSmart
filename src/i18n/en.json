@@ -114,7 +114,9 @@
   "map": {
     "hint": "Click the globe to analyze a point",
     "reset": "View globe",
-    "selected": "Selected point"
+    "selected": "Selected point",
+    "flat": "View 2D map",
+    "globe": "View 3D globe"
   },
   "crops": {
     "maiz": "Maize",
