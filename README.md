@@ -5,6 +5,8 @@
 > Reto: **"Cambio de rumbo: Adaptando las granjas con datos de la NASA"**
 > *(Field Shift: Adapting Farms with NASA Data — NASA Space Apps Challenge 2026)*
 
+**Demo en vivo:** <https://johncamilogarzonvargas.github.io/RotaSmart/>
+
 ---
 
 ## 1. Contexto
@@ -38,13 +40,14 @@ El proyecto se enfoca en **Colombia** (33 departamentos) con datos detallados pa
 ## 3. Características
 
 - **Mapa interactivo** con coropleto por municipio y capas satelitales de la NASA.
-- **Ranking de rotaciones** evaluado en 7 ejes: agua, cobertura del suelo, nutrientes,
-  erosión, interrupción de plagas, ingreso y resiliencia climática.
-- **Explicabilidad**: cada recomendación incluye la razón y el dato que la respalda.
-- **Prioridades del agricultor** como entrada real, no decorativa.
-- **Escenarios climáticos precalculados** (5 niveles de lluvia × 5 de temperatura).
-- **Fichas de cultivo**: por qué una leguminosa, una cobertura o una raíz profunda ayuda.
-- **Modo simple y modo técnico**, con glosario y badges de confianza por variable.
+- **Ranking de rotaciones** evaluado en ocho indicadores: agua, cobertura del suelo,
+  nutrientes, erosión, interrupción de plagas, ingreso, resiliencia climática y mano de obra.
+- **Explicabilidad**: cada recomendación indica por qué sube o baja.
+- **Prioridades del agricultor** con cinco controles que reordenan el ranking en vivo.
+- **Escenario climático interactivo**: lluvia ±30 % y temperatura de −1 a +3 °C.
+- **Perfil agroclimático** con ciclo anual y tendencia 2005–2024.
+- **Riesgos climáticos** y estimación de propiedades del suelo.
+- **Interfaz bilingüe** español / inglés con un solo botón.
 - **Funciona sin conexión** (PWA) tras la primera visita.
 - **Sin registro, sin contraseña, sin instalación.**
 
@@ -97,7 +100,7 @@ https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{CAPA}/default/{FECHA}/
 
 | Fuente | Aporte | Licencia |
 |---|---|---|
-| **SoilGrids (ISRIC)** | Arcilla, arena, materia orgánica, pH y CEC a 250 m | CC BY 4.0 |
+| **Propiedades del suelo** | Arcilla, arena, materia orgánica, pH y CEC, estimadas a partir del clima de NASA POWER (la API pública de SoilGrids no cubre la región) | — |
 | **geoBoundaries** | Límites administrativos ADM1 / ADM2 | CC BY 4.0 |
 | **FAO-56** | Coeficientes de cultivo (Kc) | Público |
 | **CARTO / OpenStreetMap** | Mapa base | Atribución |
@@ -107,7 +110,7 @@ https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{CAPA}/default/{FECHA}/
 ## 5. Cómo funciona
 
 ```text
-Python (antes del evento)                Navegador
+Pipeline (antes del evento)             Navegador
 ─────────────────────────                ─────────────────────────
 POWER ─┐                                 Mapa (MapLibre)
 GIBS  ─┤                                 │
@@ -130,7 +133,7 @@ instantánea y el resultado es auditable.
 | Lenguaje | Uso |
 |---|---|
 | **TypeScript** | Aplicación web, motor de decisión y tipos de datos |
-| **Python 3.12** | Pipeline de datos satelitales y generación de agregados |
+| **Node.js (ESM)** | Pipeline de datos: NASA POWER y agregados |
 | **CSS** | Sistema de diseño con variables (Tailwind v4) |
 | **Shell / PowerShell** | Scripts de construcción y despliegue |
 
@@ -144,25 +147,23 @@ instantánea y el resultado es auditable.
 | **Tailwind CSS v4** | Estilos y sistema de diseño |
 | **Zustand** | Estado global (municipio, prioridades, escenario) |
 | **TanStack Query** | Carga y caché de datos |
-| **uPlot** | Series de tiempo de alto rendimiento |
+| **i18next + react-i18next** | Interfaz bilingüe español / inglés |
 | **vite-plugin-pwa** | Funcionamiento sin conexión |
-| **Vitest** | Pruebas del motor de decisión |
+| **Vitest** | Pruebas del motor y de las traducciones |
 
 ### Datos y geoespecial
 
 | Herramienta | Función |
 |---|---|
-| **pandas / numpy** | Análisis y agregación |
-| **geopandas / shapely / pyproj** | Geometrías y reproyección |
-| **rasterio / rioxarray / xarray** | Rásters (SRTM, suelo, satélite) |
-| **requests** | Consumo de APIs |
+| **Node.js 22** | Consulta de NASA POWER y generación de agregados |
 | **mapshaper** | Simplificación de límites (GeoJSON) |
+| **fetch nativo** | Consumo de APIs |
 
 ### Infraestructura
 
 | Herramienta | Función |
 |---|---|
-| **Cloudflare Pages** | Hospedaje estático en CDN global (sin servidor) |
+| **GitHub Pages** | Hospedaje estático en CDN global (rama `gh-pages`, sin servidor) |
 | **Git + GitHub** | Control de versiones |
 | **VS Code** | Entorno de desarrollo |
 
@@ -198,8 +199,8 @@ rotasmart/
 │  ├─ data/         hooks de carga de datos
 │  └─ ui/           componentes y tokens de diseño
 ├─ public/data/     agregados JSON y límites geográficos
-├─ python/          pipeline de datos satelitales
-├─ tests/           pruebas del motor
+├─ scripts/         pipeline de datos (NASA POWER → JSON)
+├─ tests/           pruebas del motor y de i18n
 ├─ CREDITS.md       fuentes, licencias y atribuciones
 └─ README.md
 ```
@@ -223,14 +224,12 @@ npm run build
 ```
 
 ```bash
-# Pipeline de datos (opcional, requiere Python 3.12)
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r python/requirements.txt
-python python/build_climate.py
-python python/build_soil.py
-python python/build_scenarios.py
+# Pipeline de datos (opcional: regenera public/data desde NASA POWER)
+npm run data
 ```
+
+Requiere conexión a internet. El script consulta la API de NASA POWER para los
+37 municipios del Huila y escribe un JSON compacto por municipio.
 
 ---
 

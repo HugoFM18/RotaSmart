@@ -246,7 +246,7 @@ export function MapView({ geo, index, selected, onSelect }: Props) {
   }
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full bg-[#EFECE4]">
       <div ref={containerRef} className="absolute inset-0" />
 
       {/* selector de capas */}
