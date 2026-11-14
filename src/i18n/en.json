@@ -122,7 +122,17 @@
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "resetView": "Full view",
-    "detail2d": "See detail in 2D"
+    "detail2d": "See detail in 2D",
+    "focusRegion": "Focus region",
+    "loading": "Loading 3D map?",
+    "loadError": "Could not load the map.",
+    "retry": "Retry",
+    "accessibleGlobe": "Interactive 3D map. Drag to rotate, click to select a region. Use arrow keys and + or - to navigate.",
+    "area": {
+      "loading": "Finding region boundaries…",
+      "ready": "Region outlined",
+      "unavailable": "No boundary available for this location."
+    }
   },
   "crops": {
     "maiz": "Maize",

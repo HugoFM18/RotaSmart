@@ -1,25 +1,31 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { geoOrthographic, geoPath, geoGraticule, geoDistance, geoArea } from "d3-geo";
-import { feature } from "topojson-client";
+import { feature, mesh } from "topojson-client";
 import { Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
 import { pickLocation } from "../pick";
+import { clampZoom, globePoint, indexFeatures, regionView, visibleFeatures, wrapLongitude } from "../globe";
 
 let globePromise: Promise<any> | null = null;
 function loadGlobe(): Promise<any> {
   if (!globePromise) {
     const base = import.meta.env.BASE_URL;
     globePromise = Promise.all([
-      fetch(`${base}data/globe.json`).then((r) => r.json()),
+      fetch(`${base}data/globe.json`).then((r) => { if (!r.ok) throw new Error("Globe data unavailable"); return r.json(); }),
       // Países desde world-atlas (TopoJSON): orientación correcta para d3-geo
       // y ~10k puntos, lo que mantiene el arrastre fluido.
       fetch(`${base}data/world-110m.json`)
-        .then((r) => r.json())
-        .then((topo) => feature(topo, topo.objects.countries)),
+        .then((r) => { if (!r.ok) throw new Error("World data unavailable"); return r.json(); })
+        .then((topo) => ({ countries: feature(topo, topo.objects.countries),
+          borders: mesh(topo, topo.objects.countries, (a, b) => a !== b) })),
     ])
-      .then(([layers, countries]) => ({ ...layers, countries }))
-      .catch(() => null);
+      .then(([layers, world]) => {
+        const combined = { ...layers, ...world };
+        return { ...combined, index: Object.fromEntries(["countries", "admin1", "rivers", "lakes"]
+          .map((key) => [key, indexFeatures(combined[key])])) };
+      })
+      .catch(() => { globePromise = null; return null; });
   }
   return globePromise;
 }
@@ -27,25 +33,26 @@ function loadGlobe(): Promise<any> {
 /* Paleta editorial: tierra hueso sobre ocÃ©ano azul profundo */
 const OCEAN_from = "#1D3E5E";
 const OCEAN_to = "#0A1826";
-const LAND = "#EDE7D8";
+const LAND = "#C9D8BA";
 const LAND_STROKE = "rgba(88,72,44,0.85)";
 const ADMIN_STROKE = "rgba(112,96,64,0.45)";
 const RIVER = "rgba(38,104,146,0.95)";
 const LAKE = "#4A93C6";
 const GRAT_LAND = "rgba(90,78,52,0.13)";
 const GRAT_OCEAN = "rgba(255,255,255,0.05)";
-const AREA_FILL = "rgba(255,201,64,0.30)";
-const AREA_STROKE = "#C9860A";
+const AREA_FILL = "rgba(255,201,64,0.24)";
+const AREA_STROKE = "#FFCC55";
 const LABEL = "#2A2418";
 const LABEL_HALO = "rgba(255,252,242,0.92)";
-
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 8;
+const GRATICULE = geoGraticule().step([10, 10])();
 
 export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
   const { t } = useTranslation();
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef(0);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
 
   const lat = useStore((s) => s.lat);
   const lon = useStore((s) => s.lon);
@@ -55,12 +62,33 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
 
   const [size, setSize] = useState({ w: 900, h: 700 });
   const [data, setData] = useState<any>(null);
-  const [rotation, setRotation] = useState<[number, number]>([75.28, -2.93]);
+  const [rotation, setRotation] = useState<[number, number]>(() => [-useStore.getState().lon, -useStore.getState().lat]);
   const [zoom, setZoom] = useState(1);
-  const dragRef = useRef<{ x: number; y: number; rot: [number, number]; moved: number } | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const flightRef = useRef(0);
+  const viewRef = useRef({ rotation, zoom });
+  viewRef.current = { rotation, zoom };
+  const animateTo = (targetRotation: [number, number], targetZoom: number) => {
+    cancelAnimationFrame(flightRef.current);
+    const start = viewRef.current;
+    const delta = wrapLongitude(targetRotation[0] - start.rotation[0]);
+    const started = performance.now();
+    const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650;
+    const frame = (now: number) => {
+      const progress = duration ? Math.min(1, (now - started) / duration) : 1;
+      const ease = 1 - (1 - progress) ** 3;
+      setRotation([start.rotation[0] + delta * ease, start.rotation[1] + (targetRotation[1] - start.rotation[1]) * ease]);
+      setZoom(Math.exp(Math.log(start.zoom) + Math.log(targetZoom / start.zoom) * ease));
+      if (progress < 1) flightRef.current = requestAnimationFrame(frame);
+    };
+    flightRef.current = requestAnimationFrame(frame);
+  };
+  const dragRef = useRef<{ id: number; x: number; y: number; rot: [number, number]; moved: number } | null>(null);
 
   useEffect(() => {
-    loadGlobe().then(setData);
+    let active = true;
+    loadGlobe().then((value) => { if (active) { setData(value); setLoadFailed(!value); } });
+    return () => { active = false; cancelAnimationFrame(rafRef.current); cancelAnimationFrame(flightRef.current); };
   }, []);
 
   useEffect(() => {
@@ -76,12 +104,8 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
   /* encajar la zona seleccionada */
   useEffect(() => {
     if (flyToken === 0) return;
-    const centerLon = bbox ? (bbox[1] + bbox[3]) / 2 : lon;
-    const centerLat = bbox ? (bbox[0] + bbox[2]) / 2 : lat;
-    const span = bbox ? Math.max(bbox[3] - bbox[1], bbox[2] - bbox[0]) : 6;
-    const target = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, (180 / Math.max(span, 0.05)) * 0.42));
-    setRotation([-centerLon, -centerLat]);
-    setZoom(target);
+    const target = regionView(lat, lon, bbox, wrapRef.current?.clientWidth || size.w, wrapRef.current?.clientHeight || size.h);
+    animateTo(target.rotation, target.zoom);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flyToken]);
 
@@ -89,30 +113,35 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
   const cx = size.w / 2;
   const cy = size.h / 2;
 
-  /* La proyecciÃ³n NO depende del zoom: el zoom es un transform SVG.
-     AsÃ­ acercar/alejar es instantÃ¡neo y no recalcula la geometrÃ­a. */
+  // Scale the actual projection: sphere, boundaries, labels and hit testing stay aligned.
   const projection = useMemo(
     () =>
       geoOrthographic()
         .translate([cx, cy])
-        .scale(radius)
+        .scale(radius * zoom)
         .rotate([rotation[0], rotation[1], 0])
-        .clipAngle(90),
-    [cx, cy, radius, rotation],
+        .clipAngle(Math.min(90, Math.asin(Math.min(1, Math.hypot(cx, cy) / (radius * zoom))) * 180 / Math.PI + 1))
+        .clipExtent([[0, 0], [size.w, size.h]])
+        .precision(0.6),
+    [cx, cy, radius, rotation, zoom],
   );
 
   const path = useMemo(() => geoPath(projection), [projection]);
 
   const shapes = useMemo(() => {
     if (!data) return null;
-    const step = zoom > 8 ? 1 : zoom > 3 ? 2 : 10;
+    const center: [number, number] = [-rotation[0], -rotation[1]];
+    const angle = Math.asin(Math.min(1, Math.hypot(cx, cy) / (radius * zoom))) + .02;
+    const visible = (key: string) => visibleFeatures(data.index[key], center, angle);
+    const countries = path(visible("countries")) ?? "";
     return {
       sphere: path({ type: "Sphere" } as any) ?? "",
-      graticule: path(geoGraticule().step([step, step])()) ?? "",
-      countries: path(data.countries) ?? "",
-      admin1: path(data.admin1) ?? "",
-      rivers: path(data.rivers) ?? "",
-      lakes: path(data.lakes) ?? "",
+      graticule: path(GRATICULE) ?? "",
+      countries,
+      borders: zoom > 2 ? countries : path(data.borders) ?? "",
+      admin1: zoom > 2.5 ? path(visible("admin1")) ?? "" : "",
+      rivers: zoom > 2 ? path(visible("rivers")) ?? "" : "",
+      lakes: path(visible("lakes")) ?? "",
     };
   }, [data, path, zoom]);
 
@@ -151,7 +180,7 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
     if (!data?.cities) return [];
     const center: [number, number] = [-rotation[0], -rotation[1]];
     const minPop = zoom > 5 ? 80000 : zoom > 2.5 ? 700000 : 2500000;
-    return data.cities.features
+    const candidates = data.cities.features
       .filter((f: any) => (f.properties.pop ?? 0) >= minPop)
       .map((f: any) => {
         const [flon, flat] = f.geometry.coordinates;
@@ -162,8 +191,8 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
         return {
           name: f.properties.name as string,
           pop,
-          x: cx + (p[0] - cx) * zoom,
-          y: cy + (p[1] - cy) * zoom,
+          x: p[0],
+          y: p[1],
           r: pop > 8000000 ? 3 : pop > 3000000 ? 2.3 : pop > 1000000 ? 1.8 : 1.3,
           label: zoom > 2.4 || pop > 5000000,
         } as const;
@@ -171,7 +200,14 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
       .filter(Boolean)
       .filter((c: any) => c.x > -60 && c.x < size.w + 60 && c.y > -30 && c.y < size.h + 30)
       .sort((a: any, b: any) => b.pop - a.pop)
-      .slice(0, zoom > 5 ? 34 : 18);
+      .slice(0, 80);
+    const visible: typeof candidates = [];
+    for (const city of candidates) {
+      if (visible.some((other: any) => Math.abs(city.y - other.y) < 16 && Math.abs(city.x - other.x) < Math.max(city.name.length, other.name.length) * 6 + 14)) continue;
+      visible.push(city);
+      if (visible.length >= (zoom > 5 ? 34 : 18)) break;
+    }
+    return visible;
   }, [data, projection, rotation, zoom, cx, cy, size.w, size.h]);
 
   const marker = useMemo(() => {
@@ -179,61 +215,114 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
     if (!p) return null;
     const center: [number, number] = [-rotation[0], -rotation[1]];
     if (geoDistance([lon, lat], center) >= Math.PI / 2) return null;
-    return { x: cx + (p[0] - cx) * zoom, y: cy + (p[1] - cy) * zoom };
+    return { x: p[0], y: p[1] };
   }, [projection, lon, lat, rotation, zoom, cx, cy]);
 
   /* rotaciÃ³n con raF para no saturar el hilo */
   const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!pointersRef.current.has(e.pointerId)) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const points = [...pointersRef.current.values()];
+    if (points.length > 1 && pinchRef.current) {
+      if (dragRef.current) dragRef.current.moved = 100;
+      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+      setZoom(clampZoom(pinchRef.current.zoom * distance / pinchRef.current.distance));
+      return;
+    }
     const d = dragRef.current;
-    if (!d) return;
+    if (!d || d.id !== e.pointerId) return;
     const dx = e.clientX - d.x;
     const dy = e.clientY - d.y;
     d.moved = Math.max(d.moved, Math.abs(dx) + Math.abs(dy));
-    if (rafRef.current) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = 0;
-      const k = 0.28 / zoom;
-      setRotation([d.rot[0] + dx * k, Math.max(-85, Math.min(85, d.rot[1] - dy * k))]);
+      const k = 90 / (radius * zoom);
+      if (dragRef.current !== d) return;
+      setRotation([d.rot[0] + dx * k, Math.max(-90, Math.min(90, d.rot[1] - dy * k))]);
     });
   };
 
   const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    pointersRef.current.delete(e.pointerId);
+    pinchRef.current = null;
     const d = dragRef.current;
     dragRef.current = null;
-    if (!d || d.moved > 6) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
+    if (!d || d.id !== e.pointerId || d.moved > 6 || e.type === 'pointercancel') return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const gx = (e.clientX - rect.left - cx) / zoom + cx;
-    const gy = (e.clientY - rect.top - cy) / zoom + cy;
-    const inv = projection.invert?.([gx, gy]);
-    if (inv) pickLocation(inv[1], inv[0], 6);
+    const gx = e.clientX - rect.left;
+    const gy = e.clientY - rect.top;
+    const inv = globePoint(gx, gy, size.w, size.h, radius, rotation, zoom);
+    if (inv) {
+      animateTo([-inv[0], -inv[1]], Math.max(6, zoom));
+      pickLocation(inv[1], inv[0], 10);
+    }
   };
 
-  const onWheel = (e: React.WheelEvent<SVGSVGElement>) => {
-    setZoom((z) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z * (e.deltaY > 0 ? 0.85 : 1.18))));
-  };
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const wheel = (event: WheelEvent) => {
+      event.preventDefault();
+      cancelAnimationFrame(flightRef.current);
+      const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? size.h : 1);
+      setZoom((z) => clampZoom(z * Math.exp(-delta * .002)));
+    };
+    svg.addEventListener('wheel', wheel, { passive: false });
+    return () => svg.removeEventListener('wheel', wheel);
+  }, [size.h]);
 
   const zoomBy = (factor: number) =>
-    setZoom((z) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z * factor)));
+    animateTo(viewRef.current.rotation, clampZoom(viewRef.current.zoom * factor));
 
   const reset = () => {
-    setZoom(1);
-    setRotation([-lon, -lat]);
+    animateTo([-lon, -lat], 1);
   };
 
   return (
-    <div ref={wrapRef} className="absolute inset-0 overflow-hidden">
+    <div ref={wrapRef} className="absolute inset-0 overflow-hidden bg-[radial-gradient(ellipse_at_center,#18364d,#080f1c)]">
       <svg
         width={size.w}
         height={size.h}
-        className="block touch-none cursor-grab select-none active:cursor-grabbing"
+        className="block touch-none cursor-grab select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300 active:cursor-grabbing"
         onPointerDown={(e) => {
-          (e.target as Element).setPointerCapture?.(e.pointerId);
-          dragRef.current = { x: e.clientX, y: e.clientY, rot: rotation, moved: 0 };
+          if (e.button !== 0) return;
+          cancelAnimationFrame(flightRef.current);
+          e.currentTarget.setPointerCapture(e.pointerId);
+          pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          const points = [...pointersRef.current.values()];
+          if (points.length > 1) {
+            if (dragRef.current) dragRef.current.moved = 100;
+            pinchRef.current = { distance: Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y)), zoom };
+            return;
+          }
+          dragRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, rot: rotation, moved: 0 };
         }}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        onWheel={onWheel}
+        onLostPointerCapture={(e) => {
+          pointersRef.current.delete(e.pointerId);
+          if (dragRef.current?.id === e.pointerId) dragRef.current = null;
+        }}
+        ref={svgRef}
+        tabIndex={0}
+        role="img"
+        aria-label={t('map.accessibleGlobe')}
+        onKeyDown={(e) => {
+          if (['+', '=', '-', 'Home', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) e.preventDefault();
+          if (e.key === '+' || e.key === '=') zoomBy(1.5);
+          else if (e.key === '-') zoomBy(1 / 1.5);
+          else if (e.key === 'Home') reset();
+          else if (e.key.startsWith('Arrow')) {
+            cancelAnimationFrame(flightRef.current);
+            const step = 12 / zoom;
+            setRotation(([x, y]) => [x + (e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0),
+              Math.max(-90, Math.min(90, y + (e.key === 'ArrowUp' ? step : e.key === 'ArrowDown' ? -step : 0)))]);
+          }
+        }}
       >
         <defs>
           <radialGradient id="g-ocean" cx="34%" cy="28%" r="78%">
@@ -254,12 +343,12 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
             <stop offset="100%" stopColor="rgba(6,14,24,0.42)" />
           </radialGradient>
           <clipPath id="g-sphere">
-            <circle cx={cx} cy={cy} r={radius} />
+            <circle cx={cx} cy={cy} r={radius * zoom} />
           </clipPath>
         </defs>
 
         {/* atmÃ³sfera */}
-        <circle cx={cx} cy={cy} r={radius + 16} fill="url(#g-halo)" />
+        <circle cx={cx} cy={cy} r={radius * zoom + 16} fill="url(#g-halo)" />
 
         {shapes && (
           <>
@@ -267,8 +356,8 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
             <path d={shapes.sphere} fill="url(#g-ocean)" />
 
             <g clipPath="url(#g-sphere)">
-              {/* todo el contenido se escala con un transform: el zoom no recalcula nada */}
-              <g transform={`translate(${cx} ${cy}) scale(${zoom}) translate(${-cx} ${-cy})`}>
+              {/* Projected geometry is clipped to the viewport. */}
+              <g>
                 {/* retÃ­cula */}
                 <path d={shapes.graticule} fill="none" stroke={GRAT_OCEAN} strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
 
@@ -286,7 +375,7 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
                   <path d={shapes.admin1} fill="none" stroke={ADMIN_STROKE} strokeWidth={0.7} vectorEffect="non-scaling-stroke" />
                 )}
                 <path
-                  d={shapes.countries}
+                  d={shapes.borders}
                   fill="none"
                   stroke={LAND_STROKE}
                   strokeWidth={Math.min(1.9, 0.85 + zoom * 0.11)}
@@ -308,7 +397,7 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
               </g>
 
               {/* sombreado de limbo: da volumen esfÃ©rico a cualquier zoom */}
-              <circle cx={cx} cy={cy} r={radius} fill="url(#g-shade)" pointerEvents="none" />
+              <circle cx={cx} cy={cy} r={radius * zoom} fill="url(#g-shade)" pointerEvents="none" />
             </g>
 
             {/* borde del planeta */}
@@ -347,12 +436,19 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
         )}
       </svg>
 
+      {!data && <div role="status" className="absolute inset-0 grid place-items-center pointer-events-none">
+        <div className="pointer-events-auto rounded-xl border border-white/15 bg-slate-950/90 p-4 text-sm text-white">
+          {t(loadFailed ? 'map.loadError' : 'map.loading')}
+          {loadFailed && <button type="button" onClick={() => { setLoadFailed(false); loadGlobe().then((value) => { setData(value); setLoadFailed(!value); }); }} className="ml-3 underline">{t('map.retry')}</button>}
+        </div>
+      </div>}
       {/* controles de zoom */}
       <div className="absolute right-3 top-3 z-10 flex flex-col gap-1.5">
         {[
           { icon: Plus, label: t("map.zoomIn"), fn: () => zoomBy(1.5) },
           { icon: Minus, label: t("map.zoomOut"), fn: () => zoomBy(1 / 1.5) },
-          { icon: Maximize2, label: t("map.resetView"), fn: reset },
+          { icon: Maximize2, label: t("map.focusRegion"), fn: () => { const target = regionView(lat, lon, bbox, size.w, size.h); animateTo(target.rotation, target.zoom); } },
+          { icon: RotateCcw, label: t("map.resetView"), fn: reset },
         ].map(({ icon: Icon, label, fn }) => (
           <button
             key={label}
@@ -360,7 +456,7 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
             onClick={fn}
             aria-label={label}
             title={label}
-            className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 bg-black/45 text-white/80 backdrop-blur transition-colors hover:bg-white/15 hover:text-white"
+            className="grid h-10 w-10 place-items-center rounded-lg border border-white/15 bg-black/45 text-white/80 backdrop-blur transition-colors hover:bg-white/15 hover:text-white"
           >
             <Icon size={14} strokeWidth={1.9} />
           </button>
@@ -385,4 +481,3 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
     </div>
   );
 }
-

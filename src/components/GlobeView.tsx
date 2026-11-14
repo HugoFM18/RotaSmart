@@ -9,6 +9,8 @@ export function GlobeView() {
   const { t } = useTranslation();
   const lat = useStore((s) => s.lat);
   const lon = useStore((s) => s.lon);
+  const place = useStore((s) => s.place);
+  const areaStatus = useStore((s) => s.areaStatus);
   const [mode, setMode] = useState<"globe" | "flat">("globe");
 
   return (
@@ -19,6 +21,10 @@ export function GlobeView() {
         <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/70">
           <Globe2 size={12} /> {t("map.selected")}
         </p>
+        {place && <p className="mt-1 max-w-[210px] truncate text-[11px] text-white/90" title={place}>{place}</p>}
+        {areaStatus !== "idle" && <p role="status" className="mt-1 max-w-[210px] text-[10px] text-amber-200">
+          {t(`map.area.${areaStatus}`)}
+        </p>}
         <p className="num mt-1 text-[11px] text-white/90">
           {lat.toFixed(3)}°, {lon.toFixed(3)}°
         </p>

@@ -239,9 +239,9 @@ export async function fetchArea(lat: number, lon: number, lang: string, zoom = 1
   try {
     const url =
       `https://nominatim.openstreetmap.org/reverse?format=json&zoom=${zoom}` +
-      `&polygon_geojson=1&addressdetails=1&lat=${lat}&lon=${lon}` +
+      `&polygon_geojson=1&polygon_threshold=0.001&addressdetails=1&lat=${lat}&lon=${lon}` +
       `&accept-language=${lang}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!res.ok) return null;
     const j = await res.json();
 

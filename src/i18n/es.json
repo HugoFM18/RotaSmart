@@ -122,7 +122,17 @@
     "zoomIn": "Acercar",
     "zoomOut": "Alejar",
     "resetView": "Vista completa",
-    "detail2d": "Ver detalle en 2D"
+    "detail2d": "Ver detalle en 2D",
+    "focusRegion": "Centrar región",
+    "loading": "Cargando mapa 3D…",
+    "loadError": "No se pudo cargar el mapa.",
+    "retry": "Reintentar",
+    "accessibleGlobe": "Mapa 3D interactivo. Arrastra para girar, haz clic para seleccionar una región. Usa las flechas y las teclas + y - para navegar.",
+    "area": {
+      "loading": "Buscando los límites de la región…",
+      "ready": "Región delimitada",
+      "unavailable": "Límite no disponible para este punto."
+    }
   },
   "crops": {
     "maiz": "Maíz",

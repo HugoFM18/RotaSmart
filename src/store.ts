@@ -13,6 +13,8 @@ type Store = {
   priorities: Priorities;
   scenario: { rain: number; temp: number };
   flyToken: number;
+  areaStatus: "idle" | "loading" | "ready" | "unavailable";
+  setAreaStatus: (status: "idle" | "loading" | "ready" | "unavailable") => void;
   setPoint: (lat: number, lon: number) => void;
   focusArea: (
     lat: number,
@@ -47,13 +49,15 @@ export const useStore = create<Store>((set) => ({
   priorities: DEFAULT_PRIORITIES,
   scenario: { rain: 0, temp: 0 },
   flyToken: 0,
+  areaStatus: "idle",
+  setAreaStatus: (areaStatus) => set({ areaStatus }),
 
-  setPoint: (lat, lon) => set({ lat, lon, polygon: null, bbox: null }),
+  setPoint: (lat, lon) => set({ lat, lon, place: null, polygon: null, bbox: null, areaStatus: "idle" }),
   focusArea: (lat, lon, place, polygon, bbox) =>
-    set((s) => ({ lat, lon, place, polygon, bbox, flyToken: s.flyToken + 1 })),
+    set((s) => ({ lat, lon, place, polygon, bbox, areaStatus: polygon ? "ready" : "idle", flyToken: s.flyToken + 1 })),
   setPlace: (place) => set({ place }),
   setArea: (polygon, bbox, place) =>
-    set((s) => ({ polygon, bbox, place, flyToken: s.flyToken + 1 })),
+    set((s) => ({ polygon, bbox, place, areaStatus: polygon ? "ready" : "unavailable", flyToken: s.flyToken + 1 })),
   setCrop: (crop) => set({ crop }),
   setPriority: (key, value) =>
     set((s) => ({ priorities: { ...s.priorities, [key]: value } })),

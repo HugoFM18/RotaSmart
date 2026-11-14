@@ -14,6 +14,7 @@ export function pickLocation(lat: number, lon: number, zoom = 10) {
   const { setPoint, setArea } = useStore.getState();
 
   setPoint(lat, lon);
+  useStore.getState().setAreaStatus("loading");
 
   const run = async () => {
     const wait = Math.max(0, 1100 - (Date.now() - lastCall));
@@ -22,10 +23,13 @@ export function pickLocation(lat: number, lon: number, zoom = 10) {
     lastCall = Date.now();
 
     const area = await fetchArea(lat, lon, i18n.resolvedLanguage ?? "es", zoom);
-    if (myToken !== token) return;
+    const current = useStore.getState();
+    if (myToken !== token || current.lat !== lat || current.lon !== lon) return;
 
     if (area && (area.polygon || area.bbox)) {
       setArea(area.polygon, area.bbox, area.name);
+    } else {
+      useStore.getState().setAreaStatus("unavailable");
     }
   };
 
