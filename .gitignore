@@ -24,6 +24,7 @@ __pycache__/
 
 # Datos crudos y pesados (se regeneran con scripts/)
 /data/
+/scripts/.globe-tmp/
 *.tif
 *.tiff
 *.nc
