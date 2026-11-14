@@ -199,7 +199,12 @@ npm run dev
 npm run test     # pruebas
 npm run build    # producción
 npm run data     # regenerar los JSON regionales del Huila (opcional)
+npm run globe    # regenerar la geometría del globo (países, ríos, lagos, ciudades)
 ```
+
+El globo **no usa ninguna API de mapas en tiempo de ejecución**: toda su geometría
+(`public/data/globe.json` y `countries-50m.json`) se genera una vez con
+Natural Earth 50m + mapshaper y viaja como archivo estático.
 
 ---
 

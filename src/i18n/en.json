@@ -117,7 +117,11 @@
     "selected": "Selected point",
     "flat": "View 2D map",
     "globe": "View 3D globe",
-    "globeUnavailable": "The 3D globe is not available on this device. Showing the 2D map."
+    "globeUnavailable": "The 3D globe is not available on this device. Showing the 2D map.",
+    "zoom": "Zoom",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetView": "Full view"
   },
   "crops": {
     "maiz": "Maize",

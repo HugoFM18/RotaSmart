@@ -117,7 +117,11 @@
     "selected": "Punto seleccionado",
     "flat": "Ver mapa 2D",
     "globe": "Ver globo 3D",
-    "globeUnavailable": "El globo 3D no está disponible en este equipo. Mostrando mapa 2D."
+    "globeUnavailable": "El globo 3D no está disponible en este equipo. Mostrando mapa 2D.",
+    "zoom": "Zoom",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "resetView": "Vista completa"
   },
   "crops": {
     "maiz": "Maíz",
