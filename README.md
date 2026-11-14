@@ -139,7 +139,6 @@ y calcula todo en el cliente en pocos milisegundos.
 |---|---|
 | **Vercel** | Hospedaje estático en CDN global |
 | **GitHub** | Control de versiones |
-| **GitHub Pages** | Despliegue de respaldo |
 
 **No se usa:** backend propio, base de datos, Docker ni servicios de pago.
 
