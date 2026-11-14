@@ -116,7 +116,8 @@
     "reset": "View globe",
     "selected": "Selected point",
     "flat": "View 2D map",
-    "globe": "View 3D globe"
+    "globe": "View 3D globe",
+    "globeUnavailable": "The 3D globe is not available on this device. Showing the 2D map."
   },
   "crops": {
     "maiz": "Maize",
@@ -141,7 +142,7 @@
     "r8": "Sorghum → Beans → Cover crop"
   },
   "footer": {
-    "source": "Data: NASA POWER 2005–2024 · SoilGrids (ISRIC) · NASA Blue Marble",
+    "source": "Data: NASA POWER 2005–2024 · SoilGrids (ISRIC) · OpenStreetMap",
     "disclaimer": "A support tool. It does not replace the farmer's or agronomist's judgment.",
     "independent": "Independent project. Not affiliated with or endorsed by NASA."
   }

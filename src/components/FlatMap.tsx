@@ -3,12 +3,37 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useStore } from "../store";
 
-const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+type TileProvider = { id: string; url: string; maxZoom: number; attribution: string };
 
-/** Mapa 2D (Leaflet) para navegadores sin WebGL. */
+/** Cadena de respaldo de tiles para el mapa 2D. */
+const TILE_PROVIDERS: TileProvider[] = [
+  {
+    id: "osm",
+    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+  {
+    id: "esri-imagery",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    maxZoom: 18,
+    attribution: "Tiles &copy; Esri · Maxar · Earthstar Geographics",
+  },
+  {
+    id: "esri-streets",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+    maxZoom: 18,
+    attribution: "Tiles &copy; Esri",
+  },
+];
+
 export function FlatMap() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const layerRef = useRef<L.TileLayer | null>(null);
+  const providerRef = useRef(0);
+  const errorsRef = useRef(0);
   const markerRef = useRef<L.CircleMarker | null>(null);
   const areaRef = useRef<L.GeoJSON | null>(null);
 
@@ -35,20 +60,34 @@ export function FlatMap() {
       attributionControl: true,
     });
 
-    L.tileLayer(TILES, {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
+    const applyProvider = (index: number) => {
+      layerRef.current?.remove();
+      const provider = TILE_PROVIDERS[index];
+      const layer = L.tileLayer(provider.url, {
+        maxZoom: provider.maxZoom,
+        attribution: provider.attribution,
+        crossOrigin: true,
+      });
+      layer.on("tileerror", () => {
+        errorsRef.current += 1;
+        if (
+          errorsRef.current >= 4 &&
+          providerRef.current < TILE_PROVIDERS.length - 1
+        ) {
+          errorsRef.current = 0;
+          providerRef.current += 1;
+          applyProvider(providerRef.current);
+        }
+      });
+      layer.addTo(map);
+      layerRef.current = layer;
+    };
+
+    applyProvider(0);
 
     markerRef.current = L.circleMarker(
       [useStore.getState().lat, useStore.getState().lon],
-      {
-        radius: 7,
-        color: "#ffffff",
-        weight: 2,
-        fillColor: "#C77D13",
-        fillOpacity: 1,
-      },
+      { radius: 7, color: "#ffffff", weight: 2, fillColor: "#C77D13", fillOpacity: 1 },
     ).addTo(map);
 
     map.on("click", (e: L.LeafletMouseEvent) => {

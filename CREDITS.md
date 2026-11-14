@@ -14,10 +14,10 @@ Challenge 2026**, reto *"Cambio de rumbo: Adaptando las granjas con datos de la 
 | Fuente | Uso en el proyecto | Enlace |
 |---|---|---|
 | **NASA POWER** | Series mensuales 2005–2024 consultadas en vivo para cualquier coordenada del planeta. | <https://power.larc.nasa.gov/> |
-| **NASA GIBS** | Tiles WMTS: Blue Marble (globo) y capas NDVI, precipitación y temperatura. | <https://nasa.github.io/nasa-gibs/> |
-| **NASA SMAP** | Humedad del suelo (visualización vía GIBS L4). | <https://smap.jpl.nasa.gov/> |
-| **NASA GPM / IMERG** | Precipitación global (visualización vía GIBS). | <https://gpm.nasa.gov/> |
-| **NASA MODIS** | Índices de vegetación y temperatura de superficie (vía GIBS). | <https://modis.gsfc.nasa.gov/> |
+
+> Los datasets SMAP, GPM-IMERG, MODIS y SRTM se evaluaron durante el desarrollo como
+> fuentes del reto, pero la versión actual obtiene todas las variables agroclimáticas de
+> NASA POWER para mantener una sola fuente consistente y verificable por coordenada.
 
 **Documentación de la API POWER:** <https://power.larc.nasa.gov/docs/services/api/>
 
@@ -33,7 +33,9 @@ oficiales.
 | **Nominatim / OpenStreetMap** | Búsqueda de lugares. | ODbL | <https://nominatim.org/> |
 | **BigDataCloud** | Geocodificación inversa. | Términos del servicio | <https://www.bigdatacloud.com/> |
 | **geoBoundaries** | Límites administrativos (datos regionales opcionales). | CC BY 4.0 | <https://www.geoboundaries.org/> |
-| **OpenStreetMap / CARTO** | Mapa base de referencia. | ODbL / atribución CARTO | <https://www.openstreetmap.org/copyright> |
+| **OpenStreetMap** | Mapa base del globo 2D. | ODbL | <https://www.openstreetmap.org/copyright> |
+| **Esri World Imagery / Streets** | Respaldo de tiles del mapa 2D. | Términos de Esri | <https://www.esri.com/> |
+| **Natural Earth (world-atlas)** | Geometría vectorial del globo 3D. | Dominio público | <https://www.naturalearthdata.com/> |
 | **FAO-56** | Referencia metodológica para evapotranspiración y coeficientes de cultivo. | Documento público | <https://www.fao.org/3/x0490s/x0490s00.htm> |
 
 **Nota metodológica:** las propiedades del suelo se consultan a **SoilGrids (ISRIC)** para
@@ -48,7 +50,9 @@ pedológico simple, y la interfaz lo indica como *"Suelo: estimado"*.
 | React | MIT | <https://react.dev/> |
 | Vite | MIT | <https://vite.dev/> |
 | TypeScript | Apache-2.0 | <https://www.typescriptlang.org/> |
-| MapLibre GL JS | BSD-3-Clause | <https://maplibre.org/> |
+| d3-geo | ISC | <https://d3js.org/d3-geo> |
+| topojson-client | ISC | <https://github.com/topojson/topojson-client> |
+| Leaflet | BSD-2-Clause | <https://leafletjs.com/> |
 | Tailwind CSS | MIT | <https://tailwindcss.com/> |
 | Zustand | MIT | <https://zustand-demo.pmnd.rs/> |
 | TanStack Query | MIT | <https://tanstack.com/query> |

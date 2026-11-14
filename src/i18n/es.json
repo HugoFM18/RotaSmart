@@ -116,7 +116,8 @@
     "reset": "Ver el globo",
     "selected": "Punto seleccionado",
     "flat": "Ver mapa 2D",
-    "globe": "Ver globo 3D"
+    "globe": "Ver globo 3D",
+    "globeUnavailable": "El globo 3D no está disponible en este equipo. Mostrando mapa 2D."
   },
   "crops": {
     "maiz": "Maíz",
@@ -141,7 +142,7 @@
     "r8": "Sorgo → Fríjol → Cobertura"
   },
   "footer": {
-    "source": "Datos: NASA POWER 2005–2024 · SoilGrids (ISRIC) · NASA Blue Marble",
+    "source": "Datos: NASA POWER 2005–2024 · SoilGrids (ISRIC) · OpenStreetMap",
     "disclaimer": "Herramienta de apoyo. No reemplaza el criterio del agricultor ni del agrónomo.",
     "independent": "Proyecto independiente. No afiliado ni respaldado por NASA."
   }

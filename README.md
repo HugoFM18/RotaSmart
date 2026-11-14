@@ -34,9 +34,9 @@ del globo, elige tu cultivo y obtén su viabilidad** junto con los datos que la 
 
 ## 3. Características
 
-- **Globo 3D mundial** con proyección de globo de MapLibre y NASA Blue Marble.
-- **Respaldo automático de mapa base**: NASA GIBS → EOX Sentinel-2 → OpenStreetMap.
-- **Mapa 2D con Leaflet** para navegadores sin WebGL: zoom, arrastre y polígonos.
+- **Globo 3D vectorial (SVG)** con proyección ortográfica: gira al arrastrar, zoom con la rueda y clic para elegir un punto. **No requiere WebGL.**
+- **Mapa 2D con Leaflet**: zoom, arrastre, polígonos y respaldo de tiles (OpenStreetMap → Esri).
+- **Alternancia 3D / 2D** con un botón.
 - **Zoom al hacer clic**: cada clic centra y acerca a la zona seleccionada.
 - **Delimitación del municipio** en amarillo suave al buscarlo, con encuadre automático.
 - **Análisis bajo demanda** en cualquier coordenada del planeta.
@@ -57,9 +57,9 @@ del globo, elige tu cultivo y obtén su viabilidad** junto con los datos que la 
 | Servicio | Qué entrega | Uso en RotaSmart | Clave |
 |---|---|---|---|
 | **NASA POWER** | Temperatura, precipitación, humedad, viento y radiación, series mensuales 2005–2024 para cualquier coordenada. | Base del balance hídrico, ET0, tendencias y riesgos. | ✅ No |
-| **NASA GIBS — Blue Marble** | Imagen global de la Tierra. | Textura del globo terráqueo. | ✅ No |
-| **NASA GIBS — MODIS / IMERG / SMAP** | Tiles satelitales de vegetación, lluvia y humedad. | Disponibles para capas de mapa. | ✅ No |
-| **NASA SMAP** | Humedad del suelo. | Estrés hídrico (vía GIBS). | ✅ No |
+
+> Los mapas base (globo y 2D) usan geometría vectorial y tiles de OpenStreetMap/Esri.
+> Todos los datos de NASA provienen de la API POWER, consultada en vivo por coordenada.
 
 ```text
 NASA POWER (mensual, punto):
@@ -128,8 +128,8 @@ y calcula todo en el cliente en pocos milisegundos.
 |---|---|
 | **React 19** | Interfaz de usuario |
 | **Vite 6** | Empaquetado y desarrollo |
-| **MapLibre GL JS 5** | Globo 3D y render vectorial por GPU |
-| **Leaflet 1.9** | Mapa 2D de respaldo sin WebGL |
+| **d3-geo + TopoJSON** | Globo 3D ortográfico en SVG (sin WebGL) |
+| **Leaflet 1.9** | Mapa 2D con tiles y polígonos |
 | **Tailwind CSS v4** | Estilos y tokens de diseño |
 | **Zustand** | Estado global (punto, cultivo, prioridades, escenario) |
 | **TanStack Query** | Caché de consultas por coordenada |
