@@ -109,7 +109,7 @@
   },
   "ranking": {
     "title": "Rotations and intercrops",
-    "subtitle": "Options that include your {{crop}} crop, based on climate and soil. Expand each for benefits, management and sources.",
+    "subtitle": "Up to 3 options that include your {{crop}} crop, based on climate and soil. Expand each for benefits, management and sources.",
     "best": "Best option",
     "unavailable": "No options in the catalog both include {{crop}} and are compatible with open-field, rainfed cultivation here. Review the crop's limiting factors and the plot's conditions.",
     "source": "Source:",
@@ -171,6 +171,69 @@
       "management": "Select a cover crop suited to rainfall and the plot's growing cycle.",
       "care": "The legume's contribution depends on growth and residue management.",
       "scope": "General guidance; it does not demonstrate this full sequence."
+    },
+    "r9": {
+      "benefit": "Intercropped maize provides food and income during coffee establishment.",
+      "soil": "Plan weed management to retain cover over the soil.",
+      "management": "Consider it in newly planted or stumped coffee, mainly in full-sun systems.",
+      "care": "Manage fertilization and planting density separately to avoid competition.",
+      "scope": "Check coffee growth stage and the cover crop species before establishing the system."
+    },
+    "r10": {
+      "benefit": "Plantain can provide temporary shade during coffee establishment.",
+      "soil": "It allows additional production while permanent shade develops.",
+      "management": "Regulate shade and space plants to avoid an overly dense canopy.",
+      "care": "Check water, nutrition, plant health and management for each crop.",
+      "scope": "Validate growth stage, density and cover species; the score does not simulate shade effects."
+    },
+    "r11": {
+      "benefit": "Intercropping cassava and maize diversifies production on the plot.",
+      "soil": "The FAO guide includes maize among crops that can accompany cassava.",
+      "management": "Adjust varieties, planting dates and spacing to share growing space.",
+      "care": "Watch for competition for light, water and nutrients between both crops.",
+      "scope": "This guide covers sub-Saharan Africa; the arrangement needs local adaptation."
+    },
+    "r12": {
+      "benefit": "A preceding cover crop allows cassava to be established over plant residues.",
+      "soil": "FAO documents green manure and no-till experiences in Paraguay.",
+      "management": "Select the species and terminate the cover before establishing cassava.",
+      "care": "Avoid actively growing climbing cover crops that can compete with cassava.",
+      "scope": "Not every cover crop is validated; check species, water and residue management."
+    },
+    "r13": {
+      "benefit": "Plantain and beans diversify food production during cacao establishment.",
+      "soil": "The AGROSAVIA model combines temporary shade, ground cover and residue recycling.",
+      "management": "Cacao remains in place; match beans to available light between rows.",
+      "care": "Plan permanent shade and avoid competition for water and nutrients.",
+      "scope": "The full model also includes timber trees; only these crops are evaluated here."
+    },
+    "r14": {
+      "benefit": "Maize can produce food while cacao is being established.",
+      "soil": "The Santander guide includes annual food crops between the system's rows.",
+      "management": "Retain cacao and schedule maize while space and light are available.",
+      "care": "Adapt spacing, nutrition and permanent shade to the agroforestry design.",
+      "scope": "Identify the cover species; the regional guide does not validate every arrangement."
+    },
+    "r15": {
+      "benefit": "Rice can accompany the establishment of improved pasture.",
+      "soil": "AGROSAVIA describes this association for Llanura 11 rice in Colombia's Altillanura.",
+      "management": "Choose the grass and coordinate establishment with the rice harvest.",
+      "care": "Check soil, drainage and competition before implementing the system.",
+      "scope": "This reference is variety- and region-specific; it does not support every rice or pasture."
+    },
+    "r16": {
+      "benefit": "Green manure before rice can supply organic matter to the soil.",
+      "soil": "Embrapa describes benefits for soil structure and nutrient recycling.",
+      "management": "Choose the cover and schedule its termination before sowing rice.",
+      "care": "Adapt residue management, moisture and fertilization to the system.",
+      "scope": "This is general guidance; distinguish rainfed from irrigated rice before applying it."
+    },
+    "r17": {
+      "benefit": "Sorghum with pasture offers a way to produce grain, forage and residues.",
+      "soil": "A Brazilian trial evaluated grain sorghum with brachiaria grasses between rows.",
+      "management": "Select the grass species and adjust sowing depth and arrangement.",
+      "care": "Some combinations yielded less; manage competition between crops.",
+      "scope": "Results depend on species and management; they do not apply to every pasture."
     }
   },
   "why": {
@@ -234,7 +297,16 @@
     "r5": "Cassava → Beans → Cover crop",
     "r6": "Cacao + Shade plantain + Cover crop",
     "r7": "Pasture → Maize → Beans",
-    "r8": "Sorghum → Beans → Cover crop"
+    "r8": "Sorghum → Beans → Cover crop",
+    "r9": "Coffee + Intercropped maize + Cover crop",
+    "r10": "Coffee + Shade plantain + Cover crop",
+    "r11": "Cassava + Intercropped maize",
+    "r12": "Cover crop → Cassava",
+    "r13": "Cacao + Plantain + Establishment beans",
+    "r14": "Cacao + Establishment maize + Cover crop",
+    "r15": "Rice + Relay pasture",
+    "r16": "Green manure → Rice",
+    "r17": "Sorghum + Intercropped pasture"
   },
   "footer": {
     "source": "Data: NASA POWER 2005–2024 · SoilGrids (ISRIC) · OpenStreetMap",

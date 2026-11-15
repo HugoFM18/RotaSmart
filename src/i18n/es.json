@@ -109,7 +109,7 @@
   },
   "ranking": {
     "title": "Rotaciones y asociaciones",
-    "subtitle": "Opciones que incluyen tu cultivo de {{crop}}, según clima y suelo. Despliega cada una para ver sus beneficios, cuidados y fuente.",
+    "subtitle": "Hasta 3 opciones que incluyen tu cultivo de {{crop}}, según clima y suelo. Despliega cada una para ver sus beneficios, cuidados y fuente.",
     "best": "Mejor opción",
     "unavailable": "No hay opciones del catálogo que incluyan {{crop}} y sean compatibles con este punto al aire libre y de secano. Revisa los factores limitantes del cultivo y las condiciones del lote.",
     "source": "Fuente:",
@@ -171,6 +171,69 @@
       "management": "Selecciona una cobertura adaptada a la lluvia y al ciclo del lote.",
       "care": "El aporte de la leguminosa depende de su desarrollo y del manejo de residuos.",
       "scope": "Guía general; no demuestra esta secuencia completa."
+    },
+    "r9": {
+      "benefit": "El maíz intercalado aporta alimentos e ingresos durante el levante del café.",
+      "soil": "Planifica el manejo de arvenses para conservar cobertura sobre el suelo.",
+      "management": "Se considera en nuevas siembras o zocas, principalmente a libre exposición solar.",
+      "care": "Maneja por separado la fertilización y la densidad para evitar competencia.",
+      "scope": "Verifica la etapa del café y la especie de cobertura antes de establecer el arreglo."
+    },
+    "r10": {
+      "benefit": "El plátano puede ofrecer sombra transitoria durante el establecimiento del café.",
+      "soil": "Permite obtener producción adicional mientras se desarrolla el sombrío permanente.",
+      "management": "Regula la sombra y distribuye las plantas sin cerrar demasiado el cafetal.",
+      "care": "Revisa agua, nutrición, sanidad y manejo de cada cultivo.",
+      "scope": "Valida etapa, densidad y cobertura; el puntaje no simula el efecto de la sombra."
+    },
+    "r11": {
+      "benefit": "Asociar yuca y maíz permite diversificar la producción del lote.",
+      "soil": "La guía FAO incluye maíz entre los cultivos que pueden acompañar la yuca.",
+      "management": "Ajusta variedades, fechas y distancias para repartir el espacio de crecimiento.",
+      "care": "Vigila la competencia por luz, agua y nutrientes entre ambos cultivos.",
+      "scope": "Es una guía de África subsahariana; el arreglo necesita adaptación local."
+    },
+    "r12": {
+      "benefit": "Una cobertura previa permite establecer yuca sobre residuos vegetales.",
+      "soil": "La FAO documenta experiencias con abonos verdes y siembra sin labranza en Paraguay.",
+      "management": "Selecciona la especie y termina la cobertura antes de establecer la yuca.",
+      "care": "Evita coberturas trepadoras activas que puedan competir con el cultivo.",
+      "scope": "No se valida cualquier cobertura; revisa especie, agua y manejo de residuos."
+    },
+    "r13": {
+      "benefit": "Plátano y fríjol diversifican los alimentos durante el establecimiento del cacao.",
+      "soil": "El modelo de AGROSAVIA combina sombra transitoria, cobertura y reciclaje de residuos.",
+      "management": "El cacao permanece; ajusta el fríjol a la luz disponible entre los surcos.",
+      "care": "Planifica la sombra permanente y evita competencia por agua y nutrientes.",
+      "scope": "El modelo completo también incluye maderables; aquí solo se evalúan estos cultivos."
+    },
+    "r14": {
+      "benefit": "El maíz puede aportar alimentos mientras se establece el cacao.",
+      "soil": "La guía de Santander contempla cultivos transitorios entre los surcos del sistema.",
+      "management": "Mantén el cacao y programa el maíz durante la fase con espacio y luz disponibles.",
+      "care": "Ajusta distancias, nutrición y sombra permanente al diseño agroforestal.",
+      "scope": "Define la especie de cobertura; la guía regional no valida cualquier arreglo."
+    },
+    "r15": {
+      "benefit": "El arroz puede acompañar el establecimiento de una pastura mejorada.",
+      "soil": "AGROSAVIA describe esta asociación para arroz Llanura 11 en la Altillanura.",
+      "management": "Selecciona el pasto y coordina su establecimiento con la cosecha del arroz.",
+      "care": "Verifica suelo, drenaje y competencia antes de implementar el sistema.",
+      "scope": "La referencia es varietal y regional; no respalda cualquier arroz o pastura."
+    },
+    "r16": {
+      "benefit": "Un abono verde antes del arroz puede aportar materia orgánica al suelo.",
+      "soil": "Embrapa describe beneficios para estructura y reciclaje de nutrientes.",
+      "management": "Elige la cobertura y programa su terminación antes de sembrar arroz.",
+      "care": "Ajusta el manejo de residuos, la humedad y la fertilización al sistema.",
+      "scope": "Es orientación general; distingue arroz de secano y de riego antes de aplicarla."
+    },
+    "r17": {
+      "benefit": "Asociar sorgo y pastura permite explorar producción de grano, forraje y residuos.",
+      "soil": "Un ensayo brasileño evaluó sorgo granífero con braquiarias entre los surcos.",
+      "management": "Selecciona la especie de pasto y ajusta profundidad y distribución de siembra.",
+      "care": "Algunas combinaciones rindieron menos; controla la competencia entre cultivos.",
+      "scope": "El resultado depende de especie y manejo; no equivale a cualquier pastura."
     }
   },
   "why": {
@@ -234,7 +297,16 @@
     "r5": "Yuca → Fríjol → Cobertura",
     "r6": "Cacao + Plátano de sombra + Cobertura",
     "r7": "Pastura → Maíz → Fríjol",
-    "r8": "Sorgo → Fríjol → Cobertura"
+    "r8": "Sorgo → Fríjol → Cobertura",
+    "r9": "Café + Maíz intercalado + Cobertura",
+    "r10": "Café + Plátano de sombra + Cobertura",
+    "r11": "Yuca + Maíz intercalado",
+    "r12": "Cobertura → Yuca",
+    "r13": "Cacao + Plátano + Fríjol de establecimiento",
+    "r14": "Cacao + Maíz de establecimiento + Cobertura",
+    "r15": "Arroz + Pastura de relevo",
+    "r16": "Abono verde → Arroz",
+    "r17": "Sorgo + Pastura intercalada"
   },
   "footer": {
     "source": "Datos: NASA POWER 2005–2024 · SoilGrids (ISRIC) · OpenStreetMap",

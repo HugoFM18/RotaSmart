@@ -74,6 +74,15 @@ export const ROTATIONS: Rotation[] = [
   { id: "r6", crops: ["platano", "cacao", "cobertura"] },
   { id: "r7", crops: ["pastura", "maiz", "frijol"] },
   { id: "r8", crops: ["sorgo", "frijol", "cobertura"] },
+  { id: "r9", crops: ["cafe", "maiz", "cobertura"] },
+  { id: "r10", crops: ["cafe", "platano", "cobertura"] },
+  { id: "r11", crops: ["yuca", "maiz"] },
+  { id: "r12", crops: ["cobertura", "yuca"] },
+  { id: "r13", crops: ["cacao", "platano", "frijol"] },
+  { id: "r14", crops: ["cacao", "maiz", "cobertura"] },
+  { id: "r15", crops: ["arroz", "pastura"] },
+  { id: "r16", crops: ["cobertura", "arroz"] },
+  { id: "r17", crops: ["sorgo", "pastura"] },
 ];
 
 export type Priorities = {
@@ -334,7 +343,7 @@ export function evaluateAll(m: ClimateSite, p: Priorities, s: Scenario): Result[
   return ROTATIONS.map((r) => evaluateRotation(r, m, p, s)).sort((a, b) => b.total - a.total);
 }
 
-/** Recommend only compatible systems that include the farmer's selected crop. */
+/** Recommend up to three compatible systems that include the farmer's selected crop. */
 export function recommendRotations(crop: CropId, m: ClimateSite, p: Priorities, s: Scenario): Result[] {
-  return evaluateAll(m, p, s).filter(result => result.eligible && result.crops.includes(crop));
+  return evaluateAll(m, p, s).filter(result => result.eligible && result.crops.includes(crop)).slice(0, 3);
 }

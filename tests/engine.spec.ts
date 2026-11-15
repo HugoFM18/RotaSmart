@@ -185,14 +185,29 @@ describe("recommendations for the selected crop", () => {
 
   it.each(Object.keys(CROPS) as CropId[])("only recommends compatible systems that include %s", crop => {
     const results = recommendRotations(crop, suitable, priorities, { rain: 0, temp: 0 });
-    expect(results.length).toBeGreaterThan(0);
+    expect(ROTATIONS.filter(rotation => rotation.crops.includes(crop)).length).toBeGreaterThanOrEqual(3);
+    expect(results).toHaveLength(3);
     expect(results.every(result => result.eligible && result.crops.includes(crop))).toBe(true);
     expect(results.map(result => result.total)).toEqual(results.map(result => result.total).sort((a, b) => b - a));
   });
 
-  it("recommends the coffee association instead of unrelated higher-scoring systems", () => {
-    expect(recommendRotations("cafe", suitable, priorities, { rain: 0, temp: 0 }).map(r => r.id)).toEqual(["r3"]);
-    expect(recommendRotations("yuca", suitable, priorities, { rain: 0, temp: 0 }).map(r => r.id)).toEqual(["r5"]);
+  it("offers three distinct coffee associations instead of unrelated systems", () => {
+    expect(recommendRotations("cafe", suitable, priorities, { rain: 0, temp: 0 }).map(r => r.id).sort()).toEqual(["r10", "r3", "r9"]);
+    expect(recommendRotations("yuca", suitable, priorities, { rain: 0, temp: 0 }).map(r => r.id).sort()).toEqual(["r11", "r12", "r5"]);
+  });
+
+  it("keeps only the three best-scoring options when more are compatible", () => {
+    const allMaize = evaluateAll(suitable, priorities, { rain: 0, temp: 0 })
+      .filter(result => result.eligible && result.crops.includes("maiz"));
+    expect(allMaize.length).toBeGreaterThan(3);
+    expect(recommendRotations("maiz", suitable, priorities, { rain: 0, temp: 0 })).toEqual(allMaize.slice(0, 3));
+  });
+
+  it("shows fewer coffee options when plantain is too cold instead of filling the list", () => {
+    const cool = climateSite(Array(12).fill(17), Array(12).fill(150));
+    cool.soil = suitable.soil;
+    const results = recommendRotations("cafe", cool, priorities, { rain: 0, temp: 0 });
+    expect(results.map(r => r.id).sort()).toEqual(["r3", "r9"]);
   });
 
   it("does not substitute other crops when the selected crop is incompatible", () => {

@@ -64,10 +64,10 @@ describe("rotation explanations and evidence", () => {
 
   it("labels perennial systems as associations instead of sequential replacements", () => {
     for (const translations of [es, en]) {
-      expect(translations.rotations.r3).toContain("+");
-      expect(translations.rotations.r6).toContain("+");
-      expect(translations.rotations.r3).not.toContain("→");
-      expect(translations.rotations.r6).not.toContain("→");
+      for (const id of ["r3", "r6", "r9", "r10", "r13", "r14"] as const) {
+        expect(translations.rotations[id]).toContain("+");
+        expect(translations.rotations[id]).not.toContain("→");
+      }
     }
   });
 });

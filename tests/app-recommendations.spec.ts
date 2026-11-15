@@ -54,14 +54,25 @@ describe("selected crop → site analysis → rendered recommendations", () => {
       useStore.getState().setCrop("cafe");
       const coffee = renderRanking();
       expect(coffee).toContain(es.rotations.r3);
+      expect(coffee).toContain(es.rotations.r9);
+      expect(coffee).toContain(es.rotations.r10);
+      expect(coffee.match(/aria-controls="rotation-guidance-/g)).toHaveLength(3);
       expect(coffee).not.toContain(es.rotations.r5);
       expect(coffee).not.toContain(es.rotations.r8);
       expect(coffee).toContain("Cenicafé");
 
+      useStore.getState().setCrop("frijol");
+      expect(renderRanking().match(/aria-controls="rotation-guidance-/g)).toHaveLength(3);
+
       useStore.getState().setCrop("yuca");
       const cassava = renderRanking();
       expect(cassava).toContain(es.rotations.r5);
+      expect(cassava).toContain(es.rotations.r11);
+      expect(cassava).toContain(es.rotations.r12);
+      expect(cassava.match(/aria-controls="rotation-guidance-/g)).toHaveLength(3);
       expect(cassava).not.toContain(es.rotations.r3);
+      expect(cassava).not.toContain(es.rotations.r9);
+      expect(cassava).not.toContain(es.rotations.r10);
 
       client.setQueryData(["soil-v2", initialState.lat.toFixed(4), initialState.lon.toFixed(4)], { ...site.soil, ph: 8 });
       useStore.getState().setCrop("cafe");
