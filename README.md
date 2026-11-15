@@ -5,7 +5,7 @@
 > Reto: **"Cambio de rumbo: Adaptando las granjas con datos de la NASA"**
 > *(Field Shift: Adapting Farms with NASA Data — NASA Space Apps Challenge 2026)*
 
-**Demo en vivo:** <https://rotasmart-kappa.vercel.app/>
+**Demo en vivo:** <https://rotasmart-zeta.vercel.app/>
 
 ---
 
@@ -216,7 +216,10 @@ Nominatim al seleccionar un punto. Los archivos usados se guardan en la caché P
 
 ## 9. Despliegue
 
-**Producción:** <https://rotasmart-kappa.vercel.app/>
+**Producción:** <https://rotasmart-zeta.vercel.app/>
+
+Proyecto Vercel: `rota-smart/rotasmart`. Repositorio: `HugoFM18/RotaSmart`.
+La rama de producción es `Hugo`; los cambios publicados en esa rama se despliegan automáticamente.
 
 ```bash
 npm run build
