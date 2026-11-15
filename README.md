@@ -19,7 +19,7 @@ del globo, elige tu cultivo y obtén su viabilidad** junto con los datos que la 
 
 ## 2. Qué hace
 
-1. **Explora el globo terráqueo** (imagen NASA Blue Marble) y hace clic en cualquier
+1. **Explora el globo terráqueo** con imágenes satelitales a color y hace clic en cualquier
    punto del planeta, o busca un lugar por nombre.
 2. **Indica el cultivo actual** entre diez opciones (maíz, fríjol, café, cacao, arroz…).
 3. **Consulta en vivo** 20 años de datos de NASA POWER y las propiedades del suelo.
@@ -34,13 +34,13 @@ del globo, elige tu cultivo y obtén su viabilidad** junto con los datos que la 
 
 ## 3. Características
 
-- **Globo 3D vectorial (SVG)** con proyección ortográfica: gira al arrastrar, zoom con la rueda y clic para elegir un punto. **No requiere WebGL.**
-- **Mapa 2D con Leaflet**: zoom, arrastre, polígonos y respaldo de tiles (OpenStreetMap → Esri).
-- **Alternancia 3D / 2D** con un botón.
+- **Globo 3D satelital con MapLibre GL JS**: imágenes Esri World Imagery a color, arrastre, zoom, gestos táctiles y selección de áreas.
+- **Mapa 2D satelital** con los mismos límites, imágenes y selección. Cambiar de proyección conserva el renderizador y su caché. Leaflet sirve como respaldo si WebGL2 no está disponible.
+- **Respaldo de imágenes**: Esri → EOX Sentinel-2 → NASA Blue Marble → OpenStreetMap.
 - **Zoom al hacer clic**: cada clic centra y acerca a la zona seleccionada.
 - **Delimitación automática de la zona**: al hacer clic o buscar, se dibuja el límite administrativo en amarillo suave y el mapa se ajusta a él. En el globo se selecciona el departamento en la vista regional y el municipio al acercarse.
-- **Detalle de Colombia en 3D**: 33 departamentos/distritos y 1.122 municipios de geoBoundaries, incluidos los vecinos de la zona seleccionada. Los archivos TopoJSON municipales se descargan por departamento y se reutilizan al navegar. Fuera de Colombia se mantiene la delimitación mediante Nominatim.
-- **Carga progresiva**: el primer mapa solo necesita `world-110m.json` (108 KB). Ríos, lagos, departamentos y municipios se añaden al acercarse; Leaflet se descarga al abrir el mapa 2D.
+- **Límites globales**: catálogo de geoBoundaries CGAZ con 3.224 subdivisiones ADM1 y 49.349 ADM2, incluidos los vecinos de la zona visible. Los niveles equivalen a departamentos/estados y municipios/distritos según el país. Al acercarse se añaden límites locales de OpenStreetMap (niveles administrativos 5–10) mediante OpenFreeMap. La cobertura y actualización dependen de cada fuente.
+- **Carga progresiva**: las imágenes aparecen antes del detalle administrativo. El catálogo global se descarga una vez y las geometrías TopoJSON por país solo al acercarse. Los límites locales usan teselas vectoriales, procesadas en workers; las cargas se agrupan al terminar de mover el mapa y las cachés tienen límites de memoria.
 - **Delimitación del municipio** en amarillo suave al buscarlo, con encuadre automático.
 - **Análisis bajo demanda** en cualquier coordenada del planeta.
 - **Buscador de lugares** con geocodificación inversa y directa.
@@ -61,8 +61,8 @@ del globo, elige tu cultivo y obtén su viabilidad** junto con los datos que la 
 |---|---|---|---|
 | **NASA POWER** | Temperatura, precipitación, humedad, viento y radiación, series mensuales 2005–2024 para cualquier coordenada. | Base del balance hídrico, ET0, tendencias y riesgos. | ✅ No |
 
-> Los mapas base (globo y 2D) usan geometría vectorial y tiles de OpenStreetMap/Esri.
-> Todos los datos de NASA provienen de la API POWER, consultada en vivo por coordenada.
+> Los mapas base usan imágenes Esri, con EOX/NASA GIBS/OpenStreetMap como respaldo.
+> Los datos agroclimáticos de NASA provienen de POWER, consultado en vivo por coordenada.
 
 ```text
 NASA POWER (mensual, punto):
@@ -131,8 +131,9 @@ y calcula todo en el cliente en pocos milisegundos.
 |---|---|
 | **React 19** | Interfaz de usuario |
 | **Vite 6** | Empaquetado y desarrollo |
-| **d3-geo + TopoJSON** | Globo 3D ortográfico en SVG (sin WebGL) |
-| **Leaflet 1.9** | Mapa 2D con tiles y polígonos |
+| **MapLibre GL JS 5** | Globo 3D y mapa 2D satelital, capas vectoriales y workers |
+| **d3-geo + TopoJSON** | Selección geográfica y geometrías administrativas compactas |
+| **Leaflet 1.9** | Mapa 2D de respaldo cuando WebGL2 no está disponible |
 | **Tailwind CSS v4** | Estilos y tokens de diseño |
 | **Zustand** | Estado global (punto, cultivo, prioridades, escenario) |
 | **TanStack Query** | Caché de consultas por coordenada |
@@ -164,7 +165,7 @@ y calcula todo en el cliente en pocos milisegundos.
 **Para usar RotaSmart**
 
 Cualquier navegador moderno (Chrome, Edge, Firefox, Safari) en computador o celular.
-El globo no requiere WebGL. Se necesita conexión a internet para consultar NASA POWER.
+El globo usa WebGL2; los equipos sin soporte reciben el mapa 2D de respaldo. Se necesita conexión a internet para nuevas imágenes y consultas a NASA POWER.
 
 ---
 
@@ -203,14 +204,21 @@ npm run build    # producción
 npm run data     # regenerar los JSON regionales del Huila (opcional)
 npm run globe    # regenerar la geometría del globo (países, ríos, lagos, ciudades)
 npm run boundaries # regenerar los límites de Colombia (departamentos y municipios)
+npm run boundaries:world:download # descargar CGAZ ADM1/ADM2 (unos 870 MB, solo desarrollo)
+npm run boundaries:world # generar el catálogo mundial y archivos por país
 ```
 
-El globo **no usa ninguna API de mapas en tiempo de ejecución**: toda su geometría
-(`public/data/world-110m.json`, `globe.json` y `colombia/*.json`) viaja como
-archivos estáticos. `npm run boundaries` descarga geoBoundaries gbOpen, adapta la
-orientación de los polígonos a d3 y genera TopoJSON municipal con nombres que
-incluyen un hash de contenido. Los límites de Colombia no necesitan consultas a
-Nominatim al seleccionar un punto. Los archivos usados se guardan en la caché PWA.
+Los límites globales ADM0–2 viajan como archivos estáticos en `public/data/world/`.
+`index.json` conserva la procedencia, fecha de generación y SHA-256 de las fuentes;
+referencia archivos TopoJSON por país y nivel con hash de contenido. El generador
+procesa los GeoJSON originales por streaming y simplifica arcos compartidos para
+conservar las subdivisiones vecinas. Los originales quedan en una carpeta temporal
+ignorada, fuera de Git y Vercel. No hace falta regenerarlos al instalar o desplegar.
+
+Las imágenes, los límites locales OSM y las etiquetas se solicitan a sus proveedores
+solo para la vista actual. Nominatim respalda la selección cuando el catálogo no
+contiene un área. La PWA guarda recursos visitados, con un número limitado de entradas;
+explorar zonas nuevas y consultar datos agroclimáticos requiere conexión.
 
 ---
 

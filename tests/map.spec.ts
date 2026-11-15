@@ -75,7 +75,7 @@ describe("Colombian administrative detail", () => {
     const municipality = await localArea(2.9345, -75.2809, 10);
     expect(municipality?.name).toBe("Neiva, Huila, Colombia");
     await localArea(2.9345, -75.2809, 10);
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(3);
     const view = fitArea(municipality!.bbox, { w: 960, h: 640 });
     const selected = sphericalGeometry(municipality!.polygon)!;
     expect(geoPath(createProjection(view, { w: 960, h: 640 }))(selected)).toBeTruthy();

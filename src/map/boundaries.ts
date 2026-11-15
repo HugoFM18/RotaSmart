@@ -1,10 +1,10 @@
-import { geoContains, geoDistance } from "d3-geo";
+import { geoDistance } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import type { Feature, FeatureCollection, Polygon, MultiPolygon } from "geojson";
 import type { GeoProjection } from "d3-geo";
-import type { BBox } from "../store";
 import type { Size } from "./geometry";
+import { worldArea } from "./world";
 
 export type Boundary = Omit<Feature<Polygon | MultiPolygon, {
   id: string; name: string; center: [number, number]; file?: string;
@@ -16,13 +16,19 @@ const requests = new Map<string, Promise<unknown>>();
 export function loadMapData<T>(file: string): Promise<T> {
   let promise = requests.get(file);
   if (!promise) {
-    promise = fetch(`${import.meta.env.BASE_URL}data/${file}`, { signal: AbortSignal.timeout(15000) })
+    promise = fetch(`${import.meta.env.BASE_URL}data/${file}`, { signal: AbortSignal.timeout(30000) })
       .then(response => {
         if (!response.ok) throw new Error(`Map data ${response.status}: ${file}`);
         return response.json();
       })
-      .catch(error => { requests.delete(file); throw error; });
+      .catch(error => { if (requests.get(file) === promise) requests.delete(file); throw error; });
     requests.set(file, promise);
+  }
+  requests.delete(file);
+  requests.set(file, promise);
+  if (requests.size > 20) {
+    const oldestWorldFile = [...requests.keys()].find(key => key.startsWith("world/") && key !== "world/index.json");
+    if (oldestWorldFile) requests.delete(oldestWorldFile);
   }
   return promise as Promise<T>;
 }
@@ -65,20 +71,5 @@ export function boundaryVisible(boundary: Boundary, projection: GeoProjection, s
 }
 
 export async function localArea(lat: number, lon: number, zoom: number) {
-  // Colombia, including San Andrés / Providencia. Other countries keep Nominatim.
-  if (lat < -5 || lat > 14 || lon < -82 || lon > -66) return null;
-  const departments = await loadDepartments();
-  const department = departments.features.find(f => geoContains(f, [lon, lat]));
-  if (!department) return null;
-  let selected = department;
-  if (zoom >= 9) {
-    const municipalities = await loadMunicipalities(department);
-    selected = municipalities.features.find(f => geoContains(f, [lon, lat])) ?? department;
-  }
-  const [west, south, east, north] = selected.bbox;
-  return {
-    polygon: selected.geometry,
-    bbox: [south, west, north, east] as BBox,
-    name: [selected.properties.name, ...(selected === department ? [] : [department.properties.name]), "Colombia"].join(", "),
-  };
+  return worldArea(lat, lon, zoom);
 }

@@ -46,8 +46,8 @@ export default defineConfig({
             urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/data\//.test(url.pathname),
             handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "map-geometry-v2",
-              expiration: { maxEntries: 64, maxAgeSeconds: 2592000 },
+              cacheName: "map-geometry-world-v1",
+              expiration: { maxEntries: 24, maxAgeSeconds: 2592000 },
               cacheableResponse: { statuses: [200] },
             },
           },
@@ -60,11 +60,21 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/[a-d]\.basemaps\.cartocdn\.com\/.*/i,
+            urlPattern: /^https:\/\/(server\.arcgisonline\.com|tiles\.maps\.eox\.at)\/.*/i,
             handler: "CacheFirst",
             options: {
-              cacheName: "basemap-tiles",
-              expiration: { maxEntries: 500, maxAgeSeconds: 604800 },
+              cacheName: "satellite-tiles-v1",
+              expiration: { maxEntries: 300, maxAgeSeconds: 604800 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/(tiles\.openfreemap\.org|demotiles\.maplibre\.org)\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "local-boundary-tiles-v1",
+              expiration: { maxEntries: 256, maxAgeSeconds: 604800 },
+              cacheableResponse: { statuses: [200] },
             },
           },
         ],

@@ -135,7 +135,8 @@
     },
     "focusArea": "Encuadrar la zona seleccionada",
     "loadingGlobe": "Cargando mapa…",
-    "loadingDetail": "Cargando límites municipales…",
+    "loadingDetail": "Cargando límites de la zona…",
+    "imageError": "No se pudo cargar la imagen del mapa.",
     "loadingArea": "Buscando los límites de la zona…",
     "areaError": "No se pudo delimitar esta zona. Puedes elegir otro punto.",
     "detailError": "Algunos límites no se pudieron cargar."

@@ -32,10 +32,12 @@ oficiales.
 | **SoilGrids (ISRIC)** | Propiedades del suelo (arcilla, arena, materia orgánica, pH, CIC). | CC BY 4.0 | <https://soilgrids.org/> |
 | **Nominatim / OpenStreetMap** | Búsqueda de lugares. | ODbL | <https://nominatim.org/> |
 | **BigDataCloud** | Geocodificación inversa. | Términos del servicio | <https://www.bigdatacloud.com/> |
-| **geoBoundaries gbOpen** | Límites estáticos de los 33 departamentos/distritos y 1.122 municipios de Colombia en 3D; selección local de áreas en ambos mapas. Geometría simplificada, cuantizada y dividida por departamento. | CC BY 4.0 | <https://www.geoboundaries.org/api.html> |
-| **OpenStreetMap** | Mapa base del globo 2D. | ODbL | <https://www.openstreetmap.org/copyright> |
-| **Esri World Imagery / Streets** | Respaldo de tiles del mapa 2D. | Términos de Esri | <https://www.esri.com/> |
-| **Natural Earth (world-atlas)** | Geometría vectorial del globo 3D. | Dominio público | <https://www.naturalearthdata.com/> |
+| **geoBoundaries CGAZ** | Límites mundiales ADM0–2: 3.224 unidades ADM1 y 49.349 ADM2, simplificadas y distribuidas por país. Fuente, fecha de generación y SHA-256 en `public/data/world/index.json`. | CC BY 4.0 | <https://www.geoboundaries.org/globalDownloads.html> |
+| **OpenStreetMap / OpenFreeMap / OpenMapTiles** | Teselas vectoriales de límites locales (niveles administrativos 5–10) y nombres al acercarse, en 3D y 2D. OpenStreetMap raster es el último respaldo de imágenes. | ODbL (datos OSM) | <https://openfreemap.org/> · <https://openmaptiles.org/> · <https://www.openstreetmap.org/copyright> |
+| **Esri World Imagery** | Imágenes satelitales a color del globo y del plano; atribución visible de Esri, Maxar y Earthstar Geographics. | Términos de Esri y proveedores | <https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9> |
+| **EOX Sentinel-2 cloudless** | Respaldo de imágenes globales. | CC BY 4.0 | <https://s2maps.eu/> |
+| **NASA GIBS Blue Marble** | Respaldo de imágenes globales de menor resolución. | Datos NASA de acceso público | <https://www.earthdata.nasa.gov/data/tools/gibs> |
+| **Natural Earth (world-atlas)** | Geometrías históricas de referencia conservadas en el repositorio. | Dominio público | <https://www.naturalearthdata.com/> |
 | **FAO-56** | Referencia metodológica para evapotranspiración y coeficientes de cultivo. | Documento público | <https://www.fao.org/3/x0490s/x0490s00.htm> |
 
 **Nota metodológica:** las propiedades del suelo se consultan a **SoilGrids (ISRIC)** para
@@ -51,8 +53,11 @@ pedológico simple, y la interfaz lo indica como *"Suelo: estimado"*.
 | Vite | MIT | <https://vite.dev/> |
 | TypeScript | Apache-2.0 | <https://www.typescriptlang.org/> |
 | d3-geo | ISC | <https://d3js.org/d3-geo> |
+| MapLibre GL JS | BSD-3-Clause | <https://maplibre.org/> |
 | topojson-client | ISC | <https://github.com/topojson/topojson-client> |
 | topojson-server | ISC | <https://github.com/topojson/topojson-server> |
+| topojson-simplify | ISC | <https://github.com/topojson/topojson-simplify> |
+| stream-json | BSD-3-Clause | <https://github.com/uhop/stream-json> |
 | Leaflet | BSD-2-Clause | <https://leafletjs.com/> |
 | Tailwind CSS | MIT | <https://tailwindcss.com/> |
 | Zustand | MIT | <https://zustand-demo.pmnd.rs/> |
@@ -69,6 +74,7 @@ pedológico simple, y la interfaz lo indica como *"Suelo: estimado"*.
 |---|---|---|
 | Fraunces | SIL Open Font License 1.1 | <https://fonts.google.com/specimen/Fraunces> |
 | Inter | SIL Open Font License 1.1 | <https://fonts.google.com/specimen/Inter> |
+| Noto Sans (etiquetas del mapa, glifos MapLibre) | SIL Open Font License 1.1 | <https://fonts.google.com/noto/specimen/Noto+Sans> |
 
 ## 5. Metodología
 

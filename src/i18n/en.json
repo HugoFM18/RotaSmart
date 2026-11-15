@@ -135,7 +135,8 @@
     },
     "focusArea": "Frame the selected area",
     "loadingGlobe": "Loading map…",
-    "loadingDetail": "Loading municipal boundaries…",
+    "loadingDetail": "Loading area boundaries…",
+    "imageError": "The map imagery could not be loaded.",
     "loadingArea": "Finding the area boundaries…",
     "areaError": "This area could not be outlined. You can select another point.",
     "detailError": "Some boundaries could not be loaded."

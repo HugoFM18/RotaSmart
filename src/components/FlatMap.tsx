@@ -3,31 +3,11 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useStore } from "../store";
 import { pickLocation } from "../pick";
-
-type TileProvider = { id: string; url: string; maxZoom: number; attribution: string };
+import { IMAGERY_PROVIDERS } from "../map/imagery";
+import { WorldFlatLayers } from "../map/WorldFlatLayers";
 
 /** Cadena de respaldo de tiles para el mapa 2D. */
-const TILE_PROVIDERS: TileProvider[] = [
-  {
-    id: "osm",
-    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    maxZoom: 19,
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  },
-  {
-    id: "esri-imagery",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    maxZoom: 18,
-    attribution: "Tiles &copy; Esri · Maxar · Earthstar Geographics",
-  },
-  {
-    id: "esri-streets",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-    maxZoom: 18,
-    attribution: "Tiles &copy; Esri",
-  },
-];
+const TILE_PROVIDERS = IMAGERY_PROVIDERS;
 
 export function FlatMap() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -46,6 +26,7 @@ export function FlatMap() {
 
   useEffect(() => {
     if (!containerRef.current) return;
+    let disposed = false;
 
     const map = L.map(containerRef.current, {
       center: [useStore.getState().lat, useStore.getState().lon],
@@ -55,7 +36,12 @@ export function FlatMap() {
       worldCopyJump: true,
       zoomControl: true,
       attributionControl: true,
+      preferCanvas: true,
     });
+    map.createPane("world-boundaries").style.zIndex = "410";
+    map.createPane("selected-area").style.zIndex = "430";
+    const boundaries = new WorldFlatLayers(map);
+    void boundaries.start();
 
     const applyProvider = (index: number) => {
       layerRef.current?.remove();
@@ -66,6 +52,7 @@ export function FlatMap() {
         crossOrigin: true,
       });
       layer.on("tileerror", () => {
+        if (disposed || layerRef.current !== layer) return;
         errorsRef.current += 1;
         if (
           errorsRef.current >= 4 &&
@@ -97,8 +84,10 @@ export function FlatMap() {
     resizeObserver.observe(containerRef.current);
 
     return () => {
+      disposed = true;
       window.clearTimeout(resizeTimer);
       resizeObserver.disconnect();
+      boundaries.dispose();
       map.remove();
       mapRef.current = null;
     };
@@ -117,6 +106,7 @@ export function FlatMap() {
     }
     if (polygon) {
       areaRef.current = L.geoJSON(polygon, {
+        pane: "selected-area",
         style: {
           color: "#F0B429",
           weight: 2.5,

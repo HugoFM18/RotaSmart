@@ -13,11 +13,12 @@ export function GlobeView() {
   const place = useStore((s) => s.place);
   const areaStatus = useStore((s) => s.areaStatus);
   const [mode, setMode] = useState<"globe" | "flat">("globe");
+  const [globeUnavailable, setGlobeUnavailable] = useState(false);
 
   return (
     <div className="relative h-full w-full bg-[#0B1220]">
       <Suspense fallback={<p role="status" className="p-4 text-xs text-white/70">{t("map.loadingGlobe")}</p>}>
-        {mode === "globe" ? <Globe3D onRequestFlat={() => setMode("flat")} /> : <FlatMap />}
+        {globeUnavailable ? <FlatMap /> : <Globe3D flat={mode === "flat"} onRequestFlat={() => { setGlobeUnavailable(true); setMode("flat"); }} />}
       </Suspense>
 
       <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-[250px] rounded-xl border border-white/15 bg-black/45 px-3 py-2 text-bone backdrop-blur">
@@ -31,9 +32,10 @@ export function GlobeView() {
         <p className="num mt-1 text-[11px] text-white/90">
           {lat.toFixed(3)}°, {lon.toFixed(3)}°
         </p>
+        {globeUnavailable && <p role="status" className="mt-1 text-[10px] text-amber-200">{t("map.globeUnavailable")}</p>}
         <button
           type="button"
-          onClick={() => setMode((m) => (m === "globe" ? "flat" : "globe"))}
+          onClick={() => { setGlobeUnavailable(false); setMode((m) => (m === "globe" ? "flat" : "globe")); }}
           className="pointer-events-auto mt-1.5 rounded-full border border-white/20 px-2 py-0.5 text-[9px] uppercase tracking-wide text-white/70 transition-colors hover:bg-white/10"
         >
           {mode === "globe" ? t("map.flat") : t("map.globe")}

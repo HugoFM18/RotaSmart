@@ -42,8 +42,10 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (placeQuery.data) setPlace(placeQuery.data);
-  }, [placeQuery.data, setPlace]);
+    const current = useStore.getState();
+    // A background geocoder must not replace the selected administrative area's name.
+    if (placeQuery.data && current.areaStatus === "idle" && current.lat === lat && current.lon === lon) setPlace(placeQuery.data);
+  }, [placeQuery.data, setPlace, lat, lon]);
 
   const site = siteQuery.data;
 
