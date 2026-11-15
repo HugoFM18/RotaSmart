@@ -12,7 +12,7 @@ import { RankingCard } from "./components/RankingCard";
 import { MapErrorBoundary } from "./components/MapErrorBoundary";
 import { useStore } from "./store";
 import { evaluateAll, evaluateCrop } from "./engine";
-import { fetchSite, fetchPlace } from "./site";
+import { fetchClimate, fetchSoilGrids, fetchPlace, powerCell } from "./site";
 
 const GlobeView = lazy(() =>
   import("./components/GlobeView").then((m) => ({ default: m.GlobeView })),
@@ -27,11 +27,23 @@ export default function App() {
   const scenario = useStore((s) => s.scenario);
   const setPlace = useStore((s) => s.setPlace);
 
-  const siteQuery = useQuery({
-    queryKey: ["site-v2", lat, lon],
-    queryFn: () => fetchSite(lat, lon),
-    staleTime: 60 * 60 * 1000,
-    retry: 1,
+  const cell = powerCell(lat, lon);
+  const climateQuery = useQuery({
+    queryKey: ["climate-v3", cell.lat, cell.lon],
+    queryFn: ({ signal }) => fetchClimate(cell.lat, cell.lon, signal),
+    staleTime: 7 * 24 * 60 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: (count, error) => count < 1 && error.name !== "TimeoutError" &&
+      !/incomplete|invalid|sin datos|POWER 4\d\d/.test(error.message),
+  });
+  const climate = climateQuery.data?.climateCell.lat === cell.lat && climateQuery.data?.climateCell.lon === cell.lon ? climateQuery.data : undefined;
+  const soilQuery = useQuery({
+    queryKey: ["soil-v2", lat.toFixed(4), lon.toFixed(4)],
+    queryFn: ({ signal }) => fetchSoilGrids(lat, lon, signal),
+    enabled: !!climate && climate.soilSource !== "unavailable",
+    staleTime: 7 * 24 * 60 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: false,
   });
 
   const placeQuery = useQuery({
@@ -46,7 +58,12 @@ export default function App() {
     if (placeQuery.data && current.areaStatus === "idle" && current.lat === lat && current.lon === lon) setPlace(placeQuery.data);
   }, [placeQuery.data, setPlace, lat, lon]);
 
-  const site = siteQuery.data?.lat === lat && siteQuery.data?.lon === lon ? siteQuery.data : undefined;
+  const site = useMemo(() => {
+    if (!climate) return undefined;
+    const soil = climate.soilSource !== "unavailable" ? soilQuery.data : null;
+    return { ...climate, lat, lon, ...(soil ? { soil, soilSource: "soilgrids" as const } : {}),
+      soilPending: climate.soilSource !== "unavailable" && soilQuery.isFetching };
+  }, [climate, lat, lon, soilQuery.data, soilQuery.isFetching]);
 
   const viability = useMemo(
     () => (site ? evaluateCrop(crop, site, scenario) : null),
@@ -68,12 +85,12 @@ export default function App() {
             <LocationCard />
             <CropSelect />
 
-            {viability && <ViabilityCard viability={viability} />}
+            {viability && <ViabilityCard viability={viability} soilPending={site?.soilPending && site.soilSource === "estimated"} />}
 
-            {siteQuery.isLoading && !site && (
+            {climateQuery.isLoading && !site && (
               <p className="px-1 py-6 text-center text-xs text-muted">{t("loading")}</p>
             )}
-            {siteQuery.isError && (
+            {climateQuery.isError && (
               <p className="rounded-xl border border-rust/30 bg-rust/5 px-3 py-2 text-[11px] text-rust">
                 {t("error")}
               </p>

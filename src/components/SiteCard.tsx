@@ -91,6 +91,7 @@ export function SiteCard({ site }: { site: SiteData }) {
         </span>
       }
     >
+      <p className="mb-3 text-[11px] leading-relaxed text-muted">{t("site.regionalClimate")}</p>
       <div className="grid grid-cols-3 gap-x-3 gap-y-4">
         <Stat label={t("site.tmax")} value={fmt(tmax, 1, lng)} unit="°C" />
         <Stat label={t("site.tmin")} value={fmt(tmin, 1, lng)} unit="°C" />

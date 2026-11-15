@@ -1,10 +1,14 @@
 import type { ClimateSite } from "./engine";
 import { frozenClimate } from "./engine";
+import { readPowerCache, writePowerCache } from "./power-cache";
+import type { PowerParameters } from "./power-cache";
 
 export type SiteData = ClimateSite & {
   lat: number;
   lon: number;
   soilSource: "soilgrids" | "estimated" | "unavailable";
+  soilPending?: boolean;
+  climateCell: { lat: number; lon: number };
 };
 
 const START = 2005;
@@ -36,7 +40,15 @@ function hargreavesEt0(lat: number, tmean: number, tmax: number, tmin: number, m
   return Math.max(0, 0.0023 * (tmean + 17.8) * Math.sqrt(amplitude) * ra);
 }
 
-type Param = Record<string, Record<string, number>>;
+type Param = PowerParameters;
+
+/** POWER meteorology uses native MERRA-2 cells: 0.5° latitude × 0.625° longitude. */
+export function powerCell(lat: number, lon: number) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) throw new Error("Invalid coordinates");
+  const cellLon = Math.round(lon / 0.625) * 0.625;
+  // POWER clamps the eastern edge to its last cell; it does not wrap it westward.
+  return { lat: Math.round(lat / 0.5) * 0.5, lon: Math.min(179.375, cellLon) };
+}
 
 export function monthlyClimatology(param: Param, name: string, total = false, required = true) {
   const out = Array(12).fill(0);
@@ -106,27 +118,43 @@ export function estimateSoil(map: number, mat: number) {
   };
 }
 
-async function fetchPower(lat: number, lon: number): Promise<Param> {
-  const params = "T2M,T2M_MAX,T2M_MIN,PRECTOTCORR,RH2M,WS2M,ALLSKY_SFC_SW_DWN";
+function validatePower(p: Param) {
+  const mean = monthlyClimatology(p, "T2M"), max = monthlyClimatology(p, "T2M_MAX"), min = monthlyClimatology(p, "T2M_MIN");
+  monthlyClimatology(p, "PRECTOTCORR", true);
+  if (mean.some((t, i) => t < -95 || t > 65 || min[i] > t || max[i] < t)) throw new Error("POWER invalid temperature series");
+}
+
+async function fetchPower(lat: number, lon: number, signal?: AbortSignal): Promise<Param> {
+  signal?.throwIfAborted();
+  // Solar radiation, humidity and wind are not used by this model or its charts.
+  const params = "T2M,T2M_MAX,T2M_MIN,PRECTOTCORR";
   const url =
     `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=${params}` +
     `&community=AG&longitude=${lon.toFixed(4)}&latitude=${lat.toFixed(4)}` +
     `&start=${START}&end=${END}&format=JSON`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(45000) });
+  const cached = await readPowerCache(url, validatePower);
+  signal?.throwIfAborted();
+  if (cached) return cached;
+  const timeout = AbortSignal.timeout(20000);
+  const res = await fetch(url, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
   if (!res.ok) throw new Error(`POWER ${res.status}`);
   const json = await res.json();
   const p = json?.properties?.parameter;
   if (!p) throw new Error("POWER sin datos");
+  validatePower(p);
+  writePowerCache(url, p);
   return p;
 }
 
-async function fetchSoilGrids(lat: number, lon: number) {
+export async function fetchSoilGrids(lat: number, lon: number, signal?: AbortSignal) {
+  signal?.throwIfAborted();
   try {
     const query =
       `https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lon.toFixed(4)}` +
       `&lat=${lat.toFixed(4)}&property=clay&property=sand&property=soc&property=phh2o&property=cec` +
       `&depth=0-5cm&depth=5-15cm&depth=15-30cm&value=mean`;
-    const res = await fetch(query, { signal: AbortSignal.timeout(6000) });
+    const timeout = AbortSignal.timeout(6000);
+    const res = await fetch(query, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
     if (!res.ok) return null;
     const json = await res.json();
     const layers: any[] = json?.properties?.layers ?? [];
@@ -165,12 +193,14 @@ async function fetchSoilGrids(lat: number, lon: number) {
       cec: round(cec ?? 12, 1),
     };
   } catch {
+    signal?.throwIfAborted();
     return null;
   }
 }
 
-export async function fetchSite(lat: number, lon: number): Promise<SiteData> {
-  const p = await fetchPower(lat, lon);
+export async function fetchClimate(lat: number, lon: number, signal?: AbortSignal): Promise<SiteData> {
+  const cell = powerCell(lat, lon);
+  const p = await fetchPower(cell.lat, cell.lon, signal);
 
   const t2m = monthlyClimatology(p, "T2M");
   const tmax = monthlyClimatology(p, "T2M_MAX");
@@ -182,7 +212,7 @@ export async function fetchSite(lat: number, lon: number): Promise<SiteData> {
   if (t2m.some((t, i) => t < -95 || t > 65 || tmin[i] > t || tmax[i] < t)) throw new Error("POWER invalid temperature series");
 
   const et0 = Array.from({ length: 12 }, (_, i) =>
-    hargreavesEt0(lat, t2m[i], tmax[i], tmin[i], i + 1) * daysInMonth(i + 1, 2001),
+    hargreavesEt0(cell.lat, t2m[i], tmax[i], tmin[i], i + 1) * daysInMonth(i + 1, 2001),
   );
 
   const annualPpt = ppt.reduce((a, b) => a + b, 0);
@@ -192,13 +222,13 @@ export async function fetchSite(lat: number, lon: number): Promise<SiteData> {
   const aridity = frozen || annualEt0 < 1 ? null : annualPpt / annualEt0;
 
   // A climate-only soil proxy is not evidence of cultivable soil on frozen ground.
-  const soilgrids = frozen ? null : await fetchSoilGrids(lat, lon);
-  const soil = frozen ? null : soilgrids ?? estimateSoil(annualPpt, mat);
+  const soil = frozen ? null : estimateSoil(annualPpt, mat);
 
   return {
     lat,
     lon,
-    soilSource: frozen ? "unavailable" : soilgrids ? "soilgrids" : "estimated",
+    climateCell: cell,
+    soilSource: frozen ? "unavailable" : "estimated",
     climate: {
       t2m: t2m.map((v) => round(v)),
       tmax: tmax.map((v) => round(v)),
@@ -227,6 +257,14 @@ export async function fetchSite(lat: number, lon: number): Promise<SiteData> {
     },
     soil,
   };
+}
+
+/** Complete-site helper; the UI loads its climate and soil independently. */
+export async function fetchSite(lat: number, lon: number, signal?: AbortSignal): Promise<SiteData> {
+  const climate = await fetchClimate(lat, lon, signal);
+  if (climate.soilSource === "unavailable") return climate;
+  const soil = await fetchSoilGrids(lat, lon, signal);
+  return soil ? { ...climate, soil, soilSource: "soilgrids" } : climate;
 }
 
 export async function fetchPlace(lat: number, lon: number, lang: string) {

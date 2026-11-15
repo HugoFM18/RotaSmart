@@ -11,6 +11,13 @@ comprobar también la estimación de suelo y su exclusión en clima helado.
 | sahara.json | 25 | 10 |
 | neiva.json | 2.9345 | -75.2809 |
 | temperate.json | 45 | -93 |
+| neiva-grid.json | 3 | -75 |
+| antarctica-grid.json | -75 | 123.125 |
+
+Los dos archivos `*-grid.json` solicitan únicamente T2M, T2M_MAX, T2M_MIN y
+PRECTOTCORR en el centro de la celda meteorológica nativa. Conservan exactamente
+los mismos valores mensuales de esas cuatro variables que los puntos originales;
+esa igualdad se comprueba en `tests/power-loading.spec.ts`.
 
 Petición reproducible (sustituir LAT y LON):
 

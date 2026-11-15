@@ -17,7 +17,7 @@ const STATUS_COLOR: Record<string, string> = {
   bad: "#A8432C",
 };
 
-export function ViabilityCard({ viability }: { viability: Viability }) {
+export function ViabilityCard({ viability, soilPending = false }: { viability: Viability; soilPending?: boolean }) {
   const { t, i18n } = useTranslation();
   const season = viability.season;
   const month = (index: number) => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? "es", { month: "short" }).format(new Date(2024, index % 12, 1));
@@ -41,6 +41,7 @@ export function ViabilityCard({ viability }: { viability: Viability }) {
         </span>
       </div>
       <p className="mt-3 text-[11px] leading-relaxed text-muted">{t("viability.basis")}</p>
+      {soilPending && <p role="status" className="mt-1 text-[11px] leading-relaxed text-harvest">{t("viability.soilPending")}</p>}
       {season && <p className="mt-1 text-[11px] text-muted">{t("viability.season", { from: month(season.start), to: month(season.start + season.months - 1) })}</p>}
 
       <div className="mt-4 space-y-2.5">

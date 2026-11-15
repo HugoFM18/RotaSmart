@@ -44,7 +44,8 @@
     },
     "limits": "Limiting factors",
     "basis": "Estimate for open-field, rainfed cultivation, without irrigation or a greenhouse.",
-    "season": "Assessed climate window: {{from}}–{{to}}."
+    "season": "Assessed climate window: {{from}}–{{to}}.",
+    "soilPending": "Provisional result using estimated soil. Checking SoilGrids…"
   },
   "limits": {
     "water_low": "Water deficit: the crop needs more water than the rainfall provides.",
@@ -87,7 +88,8 @@
     "om": "Organic matter",
     "ph": "pH",
     "cec": "CEC",
-    "noSoil": "Agricultural soil properties are not estimated for a persistently freezing climate."
+    "noSoil": "Agricultural soil properties are not estimated for a persistently freezing climate.",
+    "regionalClimate": "NASA climate represents a regional grid cell; soil is queried for the selected point."
   },
   "priorities": {
     "title": "My priorities",

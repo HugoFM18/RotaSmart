@@ -44,7 +44,8 @@
     },
     "limits": "Factores limitantes",
     "basis": "Estimación para cultivo al aire libre y de secano, sin riego ni invernadero.",
-    "season": "Ventana climática evaluada: {{from}}–{{to}}."
+    "season": "Ventana climática evaluada: {{from}}–{{to}}.",
+    "soilPending": "Resultado provisional con suelo estimado. Verificando SoilGrids…"
   },
   "limits": {
     "water_low": "Déficit hídrico: el cultivo necesita más agua de la que llueve.",
@@ -87,7 +88,8 @@
     "om": "Materia orgánica",
     "ph": "pH",
     "cec": "CIC",
-    "noSoil": "No se estiman propiedades de suelo agrícola en un clima persistentemente helado."
+    "noSoil": "No se estiman propiedades de suelo agrícola en un clima persistentemente helado.",
+    "regionalClimate": "El clima de NASA representa una celda regional; el suelo se consulta para el punto seleccionado."
   },
   "priorities": {
     "title": "Mis prioridades",

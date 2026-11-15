@@ -11,6 +11,10 @@ No es un rendimiento previsto ni una probabilidad de éxito.
 - PRECTOTCORR se convierte de mm/día a mm/mes antes de promediar, respetando los años bisiestos. ETo se estima con Hargreaves; no se eleva artificialmente a 1 mm para dividir.
 - Las coordenadas de los datos deben coincidir con el punto seleccionado. La interfaz descarta la evaluación anterior mientras carga otra ubicación, también si la nueva petición falla.
 - POWER representa una celda climática regional; no verifica el microclima ni el suelo exacto de una parcela.
+- Se solicitan solo las cuatro variables utilizadas por el modelo: T2M, T2M_MAX, T2M_MIN y PRECTOTCORR. Se conserva el periodo completo y la validación de los doce meses.
+- Las consultas meteorológicas se reutilizan por celda nativa MERRA-2 (0,5° × 0,625°). El índice conserva las coordenadas del punto seleccionado y consulta SoilGrids por separado para ese punto. La coincidencia de valores dentro de la celda se contrastó con NASA en Neiva y la Antártida. El extremo oriental se limita a 179,375° como el servicio POWER, sin envolverlo a la celda occidental.
+- El clima se muestra en cuanto responde NASA, con suelo estimado identificado como provisional mientras se verifica SoilGrids. Si llega suelo válido, se actualiza el resultado. El bloqueo de suelo en clima helado sigue vigente.
+- Se almacenan hasta 32 respuestas históricas válidas en la caché local durante siete días. El acceso a almacenamiento es opcional; los datos incompletos no se almacenan y las entradas recuperadas se revalidan. Las consultas de puntos abandonados se cancelan.
 
 ## Requisitos que no pueden compensarse
 
@@ -55,6 +59,7 @@ No se asegura que sus ventanas independientes formen una secuencia viable en un 
 ## Fuentes
 
 - [NASA POWER: API mensual y anual](https://power.larc.nasa.gov/docs/services/api/temporal/monthly/).
+- [NASA POWER: resolución y uso de la cuadrícula nativa](https://power.larc.nasa.gov/docs/faqs/solar/) y [recomendaciones de consulta](https://power.larc.nasa.gov/docs/tutorials/service-data-request/api/).
 - [FAO: necesidades de agua y duración de ciclos](https://www.fao.org/4/s2022e/s2022e07.htm), valores indicativos sujetos a variedad y clima. Para sorgo recoge un ciclo habitual de 120–130 días y una demanda de 450–650 mm.
 - [FAO: ajuste entre régimen térmico y requisitos de cultivos](https://www.fao.org/4/t0737e/T0737E08.htm), que identifica medias inferiores a 15 °C como insuficientes para la producción normal de maíz y sorgo en esa evaluación.
 - [FAO Ecocrop: Sorghum bicolor](https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=48747), intervalo óptimo 22–35 °C. Los valores absolutos de supervivencia no equivalen a producción viable.
