@@ -1,0 +1,13 @@
+.git/
+.vercel/
+node_modules/
+dist/
+dist-ssr/
+.vite/
+scripts/.globe-tmp/
+Pautas/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
