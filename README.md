@@ -1,5 +1,7 @@
 # RotaSmart
 
+Licencia: MIT.
+
 **Viabilidad de cultivos en cualquier punto del mundo, con datos de la NASA.**
 
 > Reto: **"Cambio de rumbo: Adaptando las granjas con datos de la NASA"**
