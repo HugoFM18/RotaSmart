@@ -3,16 +3,16 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createInstance } from "i18next";
 import { I18nextProvider } from "react-i18next";
 import { describe, expect, it } from "vitest";
-import { ROTATIONS, type Result } from "../src/engine";
+import { ROTATIONS, type CropId, type Result } from "../src/engine";
 import { RankingCard } from "../src/components/RankingCard";
 import { ROTATION_REFERENCES } from "../src/rotation-guidance";
 import es from "../src/i18n/es.json";
 import en from "../src/i18n/en.json";
 
-async function render(results: Result[], language: "es" | "en") {
+async function render(results: Result[], language: "es" | "en", crop: CropId = results[0]?.crops[0] ?? "maiz") {
   const i18n = createInstance();
   await i18n.init({ lng: language, resources: { es: { translation: es }, en: { translation: en } } });
-  return renderToStaticMarkup(createElement(I18nextProvider, { i18n }, createElement(RankingCard, { results })));
+  return renderToStaticMarkup(createElement(I18nextProvider, { i18n }, createElement(RankingCard, { results, crop })));
 }
 
 const results: Result[] = ROTATIONS.map(rotation => ({
@@ -48,8 +48,17 @@ describe("rotation explanations and evidence", () => {
 
     it(`shows the empty state without recommendations or evidence links (${language})`, async () => {
       const html = await render([], language);
-      expect(html).toContain((language === "es" ? es : en).ranking.unavailable);
+      const translations = language === "es" ? es : en;
+      expect(html).toContain(translations.ranking.unavailable.split(".")[0].replace("{{crop}}", translations.crops.maiz));
       expect(html).not.toContain("<a ");
+    });
+
+    it(`identifies coffee in the heading and in the empty state (${language})`, async () => {
+      const html = await render([], language, "cafe");
+      const translations = language === "es" ? es : en;
+      expect(html).toContain(translations.ranking.subtitle.replace("{{crop}}", translations.crops.cafe));
+      expect(html).toContain(translations.ranking.unavailable.split(".")[0].replace("{{crop}}", translations.crops.cafe));
+      expect(html).not.toContain("{{crop}}");
     });
   }
 

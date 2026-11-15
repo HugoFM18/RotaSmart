@@ -11,7 +11,7 @@ import { ScenarioCard } from "./components/ScenarioCard";
 import { RankingCard } from "./components/RankingCard";
 import { MapErrorBoundary } from "./components/MapErrorBoundary";
 import { useStore } from "./store";
-import { evaluateAll, evaluateCrop } from "./engine";
+import { recommendRotations, evaluateCrop } from "./engine";
 import { fetchClimate, fetchSoilGrids, fetchPlace, powerCell } from "./site";
 
 const GlobeView = lazy(() =>
@@ -71,8 +71,8 @@ export default function App() {
   );
 
   const rotations = useMemo(
-    () => (site ? evaluateAll(site, priorities, scenario).filter(result => result.eligible) : []),
-    [site, priorities, scenario],
+    () => (site ? recommendRotations(crop, site, priorities, scenario) : []),
+    [crop, site, priorities, scenario],
   );
 
   return (
@@ -101,7 +101,7 @@ export default function App() {
             <PrioritiesCard />
             <ScenarioCard />
 
-            {site && <RankingCard results={rotations} />}
+            {site && <RankingCard key={crop} results={rotations} crop={crop} />}
 
             <footer className="space-y-1 px-1 pb-4 pt-2 text-[10px] leading-relaxed text-muted">
               <p>{t("footer.source")}</p>

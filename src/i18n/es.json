@@ -109,9 +109,9 @@
   },
   "ranking": {
     "title": "Rotaciones y asociaciones",
-    "subtitle": "Opciones según clima y suelo. Despliega cada una para ver sus beneficios, cuidados y fuente.",
+    "subtitle": "Opciones que incluyen tu cultivo de {{crop}}, según clima y suelo. Despliega cada una para ver sus beneficios, cuidados y fuente.",
     "best": "Mejor opción",
-    "unavailable": "No se encontraron rotaciones compatibles con las condiciones de este punto para cultivo al aire libre y de secano.",
+    "unavailable": "No hay opciones del catálogo que incluyan {{crop}} y sean compatibles con este punto al aire libre y de secano. Revisa los factores limitantes del cultivo y las condiciones del lote.",
     "source": "Fuente:",
     "openSource": "Consultar {{source}} (abre en otra pestaña)"
   },

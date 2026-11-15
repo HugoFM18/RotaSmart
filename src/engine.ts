@@ -333,3 +333,8 @@ export function evaluateRotation(
 export function evaluateAll(m: ClimateSite, p: Priorities, s: Scenario): Result[] {
   return ROTATIONS.map((r) => evaluateRotation(r, m, p, s)).sort((a, b) => b.total - a.total);
 }
+
+/** Recommend only compatible systems that include the farmer's selected crop. */
+export function recommendRotations(crop: CropId, m: ClimateSite, p: Priorities, s: Scenario): Result[] {
+  return evaluateAll(m, p, s).filter(result => result.eligible && result.crops.includes(crop));
+}

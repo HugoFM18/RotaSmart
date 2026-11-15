@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { Result } from "../engine";
+import type { CropId, Result } from "../engine";
 import { GUIDANCE_LINES, ROTATION_REFERENCES } from "../rotation-guidance";
 import { Section } from "./Section";
 
-export function RankingCard({ results }: { results: Result[] }) {
+export function RankingCard({ results, crop }: { results: Result[]; crop: CropId }) {
   const { t } = useTranslation();
+  const cropName = t(`crops.${crop}`);
   // Resolve the default from the current ranking when location/priorities change.
   const [selection, setSelection] = useState<{ id: string | null; results: Result[] } | null>(null);
   const open = selection?.results === results ? selection.id : results[0]?.id ?? null;
 
   return (
-    <Section title={t("ranking.title")} hint={t("ranking.subtitle")}>
-      {results.length === 0 && <p className="rounded-xl bg-bone p-3 text-[12px] leading-relaxed text-muted">{t("ranking.unavailable")}</p>}
+    <Section title={t("ranking.title")} hint={t("ranking.subtitle", { crop: cropName })}>
+      {results.length === 0 && <p className="rounded-xl bg-bone p-3 text-[12px] leading-relaxed text-muted">{t("ranking.unavailable", { crop: cropName })}</p>}
       <ol className="space-y-1.5">
         {results.map((r, i) => {
           const isBest = i === 0;

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   evaluateAll,
   evaluateCrop,
+  recommendRotations,
   CROPS,
   type CropId,
   ROTATIONS,
@@ -175,5 +176,34 @@ describe("viabilidad del cultivo", () => {
     const acid: ClimateSite = { ...site, soil: { ...site.soil, ph: 4.2 } };
     const v = evaluateCrop("maiz", acid, { rain: 0, temp: 0 });
     expect(v.limits.some((l) => l.code === "soil_ph")).toBe(true);
+  });
+});
+
+describe("recommendations for the selected crop", () => {
+  const suitable = climateSite(Array(12).fill(24), Array(12).fill(150));
+  suitable.soil = { ...suitable.soil!, clay: 32, ph: 6.2 };
+
+  it.each(Object.keys(CROPS) as CropId[])("only recommends compatible systems that include %s", crop => {
+    const results = recommendRotations(crop, suitable, priorities, { rain: 0, temp: 0 });
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every(result => result.eligible && result.crops.includes(crop))).toBe(true);
+    expect(results.map(result => result.total)).toEqual(results.map(result => result.total).sort((a, b) => b - a));
+  });
+
+  it("recommends the coffee association instead of unrelated higher-scoring systems", () => {
+    expect(recommendRotations("cafe", suitable, priorities, { rain: 0, temp: 0 }).map(r => r.id)).toEqual(["r3"]);
+    expect(recommendRotations("yuca", suitable, priorities, { rain: 0, temp: 0 }).map(r => r.id)).toEqual(["r5"]);
+  });
+
+  it("does not substitute other crops when the selected crop is incompatible", () => {
+    const alkaline = { ...suitable, soil: { ...suitable.soil!, ph: 8 } };
+    expect(evaluateAll(alkaline, priorities, { rain: 0, temp: 0 }).some(result => result.eligible)).toBe(true);
+    expect(recommendRotations("cafe", alkaline, priorities, { rain: 0, temp: 0 })).toEqual([]);
+  });
+
+  it("does not recommend a matching system with insufficient climate data", () => {
+    const missing = structuredClone(suitable);
+    missing.climate.t2m[0] = NaN;
+    expect(recommendRotations("cafe", missing, priorities, { rain: 0, temp: 0 })).toEqual([]);
   });
 });

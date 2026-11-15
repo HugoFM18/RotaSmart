@@ -109,9 +109,9 @@
   },
   "ranking": {
     "title": "Rotations and intercrops",
-    "subtitle": "Options based on climate and soil. Expand each for benefits, management and sources.",
+    "subtitle": "Options that include your {{crop}} crop, based on climate and soil. Expand each for benefits, management and sources.",
     "best": "Best option",
-    "unavailable": "No compatible rotations were found for open-field, rainfed cultivation at this location.",
+    "unavailable": "No options in the catalog both include {{crop}} and are compatible with open-field, rainfed cultivation here. Review the crop's limiting factors and the plot's conditions.",
     "source": "Source:",
     "openSource": "Read {{source}} (opens in a new tab)"
   },

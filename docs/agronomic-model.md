@@ -53,7 +53,10 @@ no constituyen una implementación certificada de FAO-AEZ.
 El promedio ponderado agua/temperatura/suelo/riesgo se calcula **después** de estas
 condiciones y queda limitado por ellas. Las rotaciones no pueden superar la viabilidad
 de su cultivo menos compatible, cualquiera que sea la prioridad económica. Solo se
-muestran como recomendaciones cuando todos sus cultivos alcanzan al menos 55.
+muestran como recomendaciones cuando todos sus cultivos alcanzan al menos 55 y la
+opción incluye el cultivo seleccionado por el agricultor. Cambiar de cultivo
+actualiza el ranking. Si no hay opciones compatibles en el catálogo para ese cultivo,
+se muestra un mensaje específico, sin sustituirlas por sistemas de otros cultivos.
 No se asegura que sus ventanas independientes formen una secuencia viable en un solo año.
 
 El ranking añade cinco párrafos de beneficios, manejo y alcance de la evidencia,
