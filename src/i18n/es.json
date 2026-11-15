@@ -108,10 +108,70 @@
     "note": "Explora qué pasaría con un clima distinto."
   },
   "ranking": {
-    "title": "Rotaciones recomendadas",
-    "subtitle": "Mejores secuencias para este sitio",
+    "title": "Rotaciones y asociaciones",
+    "subtitle": "Opciones según clima y suelo. Despliega cada una para ver sus beneficios, cuidados y fuente.",
     "best": "Mejor opción",
-    "unavailable": "No se encontraron rotaciones compatibles con las condiciones de este punto para cultivo al aire libre y de secano."
+    "unavailable": "No se encontraron rotaciones compatibles con las condiciones de este punto para cultivo al aire libre y de secano.",
+    "source": "Fuente:",
+    "openSource": "Consultar {{source}} (abre en otra pestaña)"
+  },
+  "rotationGuidance": {
+    "r1": {
+      "benefit": "Alternar maíz y fríjol diversifica la producción del lote.",
+      "soil": "El estudio encontró ventajas productivas que variaron según la temporada.",
+      "management": "La investigación comparó rotación, asociación y monocultivo en Tanzania.",
+      "care": "Define la cobertura y ajusta el calendario y la nutrición al lote.",
+      "scope": "La fuente respalda maíz–fríjol; no ensaya esta secuencia completa con cobertura."
+    },
+    "r2": {
+      "benefit": "El fríjol introduce una leguminosa antes de los cereales.",
+      "soil": "Los residuos de maíz y sorgo pueden aportar materia orgánica.",
+      "management": "Conserva rastrojos y ajusta las siembras a la lluvia disponible.",
+      "care": "Maíz y sorgo pueden compartir plagas: alternarlos no garantiza control.",
+      "scope": "Guía general; la secuencia completa necesita validación local."
+    },
+    "r3": {
+      "benefit": "El fríjol intercalado permite producir alimentos mientras el café crece.",
+      "soil": "El café permanece como cultivo principal; no se reemplaza por fríjol.",
+      "management": "La guía aplica a la etapa improductiva del café a libre exposición solar.",
+      "care": "Maneja la nutrición de cada cultivo por separado para evitar competencia.",
+      "scope": "Verifica edad, sombra y suelo; la fuente no valida cualquier cobertura."
+    },
+    "r4": {
+      "benefit": "Incluir una leguminosa permite explorar alternativas al cereal continuo.",
+      "soil": "Los ensayos colombianos evaluaron rotaciones junto con distintas labranzas.",
+      "management": "La investigación estudió arroz–soya y maíz–soya en el Piedemonte Llanero.",
+      "care": "Comprueba drenaje y humedad antes de pasar del arroz al fríjol.",
+      "scope": "Evidencia relacionada: no demuestra la secuencia arroz–fríjol–maíz."
+    },
+    "r5": {
+      "benefit": "Una leguminosa asociada puede cubrir el suelo entre las plantas de yuca.",
+      "soil": "Un ensayo en Vietnam encontró menor erosión y pérdida de nutrientes con caupí.",
+      "management": "El estudio evaluó asociación simultánea, no esta rotación con fríjol.",
+      "care": "Verifica especie, pendiente y calendario antes de aplicar la práctica.",
+      "scope": "El caupí no es fríjol común; el resultado requiere validación local."
+    },
+    "r6": {
+      "benefit": "El plátano puede aportar sombra transitoria al establecimiento del cacao.",
+      "soil": "Es una asociación de cultivos; el cacao permanece en el terreno.",
+      "management": "La guía de Santander describe el manejo del cacao en sistemas agroforestales.",
+      "care": "Ajusta la sombra y las distancias para evitar competencia entre plantas.",
+      "scope": "Selecciona la cobertura y valida el arreglo para las condiciones del lote."
+    },
+    "r7": {
+      "benefit": "La secuencia combina una fase de pastura y cultivos de grano.",
+      "soil": "Mantener residuos puede ayudar a conservar la cobertura del suelo.",
+      "management": "Define la especie de pastura y cómo finalizar esa fase.",
+      "care": "Revisa plagas compartidas entre pastos y maíz.",
+      "scope": "Guía general; no valida esta secuencia ni cualquier pastura."
+    },
+    "r8": {
+      "benefit": "Alternar sorgo y fríjol cambia la familia cultivada.",
+      "soil": "El rastrojo del sorgo puede proteger el suelo y aportar materia orgánica.",
+      "management": "Selecciona una cobertura adaptada a la lluvia y al ciclo del lote.",
+      "care": "El aporte de la leguminosa depende de su desarrollo y del manejo de residuos.",
+      "scope": "Guía general; no demuestra esta secuencia completa."
+    }
   },
   "why": {
     "water_high": "Buen equilibrio hídrico: la demanda del ciclo cabe en la lluvia disponible.",
@@ -169,10 +229,10 @@
   "rotations": {
     "r1": "Maíz → Fríjol → Cobertura",
     "r2": "Fríjol → Maíz → Sorgo",
-    "r3": "Café → Fríjol → Cobertura",
+    "r3": "Café + Fríjol intercalado + Cobertura",
     "r4": "Arroz → Fríjol → Maíz",
     "r5": "Yuca → Fríjol → Cobertura",
-    "r6": "Plátano → Cacao → Cobertura",
+    "r6": "Cacao + Plátano de sombra + Cobertura",
     "r7": "Pastura → Maíz → Fríjol",
     "r8": "Sorgo → Fríjol → Cobertura"
   },

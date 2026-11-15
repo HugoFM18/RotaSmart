@@ -108,10 +108,70 @@
     "note": "Explore what would happen under a different climate."
   },
   "ranking": {
-    "title": "Recommended rotations",
-    "subtitle": "Best sequences for this site",
+    "title": "Rotations and intercrops",
+    "subtitle": "Options based on climate and soil. Expand each for benefits, management and sources.",
     "best": "Best option",
-    "unavailable": "No compatible rotations were found for open-field, rainfed cultivation at this location."
+    "unavailable": "No compatible rotations were found for open-field, rainfed cultivation at this location.",
+    "source": "Source:",
+    "openSource": "Read {{source}} (opens in a new tab)"
+  },
+  "rotationGuidance": {
+    "r1": {
+      "benefit": "Rotating maize and common beans diversifies production on the plot.",
+      "soil": "The study found production advantages that varied with the season.",
+      "management": "The research compared rotations, intercropping and monocultures in Tanzania.",
+      "care": "Choose the cover crop and adapt the calendar and nutrition to the plot.",
+      "scope": "The source supports maize–beans; it does not test this full sequence with a cover crop."
+    },
+    "r2": {
+      "benefit": "Beans introduce a legume before the cereal crops.",
+      "soil": "Maize and sorghum residues can supply organic matter.",
+      "management": "Retain crop residues and time planting to available rainfall.",
+      "care": "Maize and sorghum can share pests: alternating them does not guarantee control.",
+      "scope": "General guidance; the full sequence needs local validation."
+    },
+    "r3": {
+      "benefit": "Intercropped beans can produce food while coffee is growing.",
+      "soil": "Coffee remains the main crop; beans do not replace it.",
+      "management": "The guide applies to the unproductive establishment stage of full-sun coffee.",
+      "care": "Manage each crop's nutrition separately to avoid competition.",
+      "scope": "Check age, shade and soil; the source does not validate every cover crop."
+    },
+    "r4": {
+      "benefit": "Including a legume offers an alternative to continuous cereal cropping.",
+      "soil": "Colombian trials evaluated rotations alongside different tillage systems.",
+      "management": "The research studied rice–soybean and maize–soybean in the Llanos foothills.",
+      "care": "Check drainage and soil moisture before switching from rice to beans.",
+      "scope": "Related evidence: it does not demonstrate the rice–beans–maize sequence."
+    },
+    "r5": {
+      "benefit": "An intercropped legume can cover the soil between cassava plants.",
+      "soil": "A Vietnam trial found less erosion and nutrient loss with cowpea.",
+      "management": "The study tested simultaneous intercropping, not this rotation with common beans.",
+      "care": "Check species, slope and planting dates before adopting the practice.",
+      "scope": "Cowpea is not common bean; the result needs local validation."
+    },
+    "r6": {
+      "benefit": "Plantain can provide temporary shade while cacao is being established.",
+      "soil": "This is an intercropping system; cacao remains in the field.",
+      "management": "The Santander guide describes cacao management in agroforestry systems.",
+      "care": "Adjust shade and spacing to avoid competition between plants.",
+      "scope": "Choose the cover crop and validate the arrangement for the plot's conditions."
+    },
+    "r7": {
+      "benefit": "The sequence combines a pasture phase with grain crops.",
+      "soil": "Retaining residues can help maintain soil cover.",
+      "management": "Identify the pasture species and how to end that phase.",
+      "care": "Check for pests shared by grasses and maize.",
+      "scope": "General guidance; it does not validate this sequence or every pasture species."
+    },
+    "r8": {
+      "benefit": "Alternating sorghum and beans changes the crop family.",
+      "soil": "Sorghum residues can protect the soil and supply organic matter.",
+      "management": "Select a cover crop suited to rainfall and the plot's growing cycle.",
+      "care": "The legume's contribution depends on growth and residue management.",
+      "scope": "General guidance; it does not demonstrate this full sequence."
+    }
   },
   "why": {
     "water_high": "Good water balance: the crop's demand fits within available rainfall.",
@@ -169,10 +229,10 @@
   "rotations": {
     "r1": "Maize → Beans → Cover crop",
     "r2": "Beans → Maize → Sorghum",
-    "r3": "Coffee → Beans → Cover crop",
+    "r3": "Coffee + Intercropped beans + Cover crop",
     "r4": "Rice → Beans → Maize",
     "r5": "Cassava → Beans → Cover crop",
-    "r6": "Plantain → Cacao → Cover crop",
+    "r6": "Cacao + Shade plantain + Cover crop",
     "r7": "Pasture → Maize → Beans",
     "r8": "Sorghum → Beans → Cover crop"
   },

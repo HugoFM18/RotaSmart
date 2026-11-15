@@ -56,6 +56,12 @@ de su cultivo menos compatible, cualquiera que sea la prioridad económica. Solo
 muestran como recomendaciones cuando todos sus cultivos alcanzan al menos 55.
 No se asegura que sus ventanas independientes formen una secuencia viable en un solo año.
 
+El ranking añade cinco párrafos de beneficios, manejo y alcance de la evidencia,
+seguidos de una fuente enlazada. Estas explicaciones no modifican ni certifican el
+puntaje: las referencias y sus límites se documentan en
+[evidencia de rotaciones](rotation-evidence.md). Café y cacao se muestran como
+asociaciones con cultivos perennes, no como reemplazos sucesivos.
+
 ## Fuentes
 
 - [NASA POWER: API mensual y anual](https://power.larc.nasa.gov/docs/services/api/temporal/monthly/).
