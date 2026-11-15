@@ -87,7 +87,7 @@ export function SiteCard({ site }: { site: SiteData }) {
       title={t("site.title")}
       action={
         <span className="rounded-full border border-line px-2 py-0.5 text-[9px] uppercase tracking-wide text-muted">
-          {site.soilSource === "soilgrids" ? t("location.soilReal") : t("location.soilEstimated")}
+          {site.soilSource === "soilgrids" ? t("location.soilReal") : site.soilSource === "estimated" ? t("location.soilEstimated") : t("location.soilUnavailable")}
         </span>
       }
     >
@@ -96,7 +96,7 @@ export function SiteCard({ site }: { site: SiteData }) {
         <Stat label={t("site.tmin")} value={fmt(tmin, 1, lng)} unit="°C" />
         <Stat label={t("site.rain")} value={fmt(site.annual.ppt, 0, lng)} unit="mm" />
         <Stat label={t("site.et0")} value={fmt(site.annual.et0, 0, lng)} unit="mm" />
-        <Stat label={t("site.aridity")} value={fmt(site.annual.aridity, 2, lng)} />
+        <Stat label={t("site.aridity")} value={site.annual.aridity == null ? "—" : fmt(site.annual.aridity, 2, lng)} />
         <Stat label={t("site.tmean")} value={fmt(site.annual.tmean, 1, lng)} unit="°C" />
       </div>
 
@@ -145,7 +145,8 @@ export function SiteCard({ site }: { site: SiteData }) {
 
       <div className="mt-4">
         <p className="mb-2 text-[10px] uppercase tracking-[0.1em] text-muted">{t("site.soil")}</p>
-        <div className="grid grid-cols-5 gap-1.5">
+        {!site.soil && <p className="rounded-xl bg-bone p-3 text-[11px] text-muted">{t("site.noSoil")}</p>}
+        {site.soil && <div className="grid grid-cols-5 gap-1.5">
           {[
             { k: "clay", v: site.soil.clay.toFixed(0) + "%" },
             { k: "sand", v: site.soil.sand.toFixed(0) + "%" },
@@ -158,7 +159,7 @@ export function SiteCard({ site }: { site: SiteData }) {
               <p className="mt-1 text-[8px] uppercase tracking-wide text-muted">{t(`site.${s.k}`)}</p>
             </div>
           ))}
-        </div>
+        </div>}
       </div>
     </Section>
   );

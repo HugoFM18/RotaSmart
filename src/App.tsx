@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo } from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Header } from "./components/Header";
 import { LocationCard } from "./components/LocationCard";
@@ -28,11 +28,10 @@ export default function App() {
   const setPlace = useStore((s) => s.setPlace);
 
   const siteQuery = useQuery({
-    queryKey: ["site", lat.toFixed(3), lon.toFixed(3)],
+    queryKey: ["site-v2", lat, lon],
     queryFn: () => fetchSite(lat, lon),
     staleTime: 60 * 60 * 1000,
     retry: 1,
-    placeholderData: keepPreviousData,
   });
 
   const placeQuery = useQuery({
@@ -47,7 +46,7 @@ export default function App() {
     if (placeQuery.data && current.areaStatus === "idle" && current.lat === lat && current.lon === lon) setPlace(placeQuery.data);
   }, [placeQuery.data, setPlace, lat, lon]);
 
-  const site = siteQuery.data;
+  const site = siteQuery.data?.lat === lat && siteQuery.data?.lon === lon ? siteQuery.data : undefined;
 
   const viability = useMemo(
     () => (site ? evaluateCrop(crop, site, scenario) : null),
@@ -55,7 +54,7 @@ export default function App() {
   );
 
   const rotations = useMemo(
-    () => (site ? evaluateAll(site, priorities, scenario) : []),
+    () => (site ? evaluateAll(site, priorities, scenario).filter(result => result.eligible) : []),
     [site, priorities, scenario],
   );
 
@@ -85,7 +84,7 @@ export default function App() {
             <PrioritiesCard />
             <ScenarioCard />
 
-            {rotations.length > 0 && <RankingCard results={rotations} />}
+            {site && <RankingCard results={rotations} />}
 
             <footer className="space-y-1 px-1 pb-4 pt-2 text-[10px] leading-relaxed text-muted">
               <p>{t("footer.source")}</p>

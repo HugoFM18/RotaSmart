@@ -1,9 +1,10 @@
 import type { ClimateSite } from "./engine";
+import { frozenClimate } from "./engine";
 
 export type SiteData = ClimateSite & {
   lat: number;
   lon: number;
-  soilSource: "soilgrids" | "estimated";
+  soilSource: "soilgrids" | "estimated" | "unavailable";
 };
 
 const START = 2005;
@@ -37,17 +38,25 @@ function hargreavesEt0(lat: number, tmean: number, tmax: number, tmin: number, m
 
 type Param = Record<string, Record<string, number>>;
 
-function monthlyClimatology(param: Param, name: string) {
+export function monthlyClimatology(param: Param, name: string, total = false, required = true) {
   const out = Array(12).fill(0);
   const counts = Array(12).fill(0);
   for (const [key, value] of Object.entries(param[name] ?? {})) {
-    const month = Number(key.slice(4, 6));
-    if (month < 1 || month > 12) return out;
-    if (value === -999 || value == null) continue;
-    out[month - 1] += value;
+    if (!/^\d{6}$/.test(key)) continue;
+    const year = Number(key.slice(0, 4)), month = Number(key.slice(4, 6));
+    // NASA's YYYY13 is the annual summary, not a thirteenth month or an early return.
+    if (year < START || year > END || month < 1 || month > 12) continue;
+    if (value === -999 || value == null || !Number.isFinite(value)) continue;
+    if (name === "PRECTOTCORR" && value < 0) continue;
+    out[month - 1] += value * (total ? daysInMonth(month, year) : 1);
     counts[month - 1] += 1;
   }
-  return out.map((v, i) => (counts[i] ? v / counts[i] : 0));
+  // Require at least half of the 20-year baseline for every calendar month.
+  if (counts.some(n => n < Math.ceil((END - START + 1) / 2))) {
+    if (required) throw new Error(`POWER incomplete monthly data: ${name}`);
+    return [];
+  }
+  return out.map((v, i) => v / counts[i]);
 }
 
 function trendPerDecade(series: { year: number; value: number }[]) {
@@ -103,7 +112,7 @@ async function fetchPower(lat: number, lon: number): Promise<Param> {
     `https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=${params}` +
     `&community=AG&longitude=${lon.toFixed(4)}&latitude=${lat.toFixed(4)}` +
     `&start=${START}&end=${END}&format=JSON`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(45000) });
   if (!res.ok) throw new Error(`POWER ${res.status}`);
   const json = await res.json();
   const p = json?.properties?.parameter;
@@ -117,7 +126,7 @@ async function fetchSoilGrids(lat: number, lon: number) {
       `https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lon.toFixed(4)}` +
       `&lat=${lat.toFixed(4)}&property=clay&property=sand&property=soc&property=phh2o&property=cec` +
       `&depth=0-5cm&depth=5-15cm&depth=15-30cm&value=mean`;
-    const res = await fetch(query);
+    const res = await fetch(query, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
     const json = await res.json();
     const layers: any[] = json?.properties?.layers ?? [];
@@ -131,7 +140,7 @@ async function fetchSoilGrids(lat: number, lon: number) {
       layer.depths?.forEach((d: any, i: number) => {
         const raw = d?.values?.mean;
         const factor = layer.unit_measure?.d_factor ?? 10;
-        if (raw != null && Number.isFinite(raw)) {
+        if (raw != null && Number.isFinite(raw) && raw >= 0 && factor > 0 && weights[i] != null) {
           sum += (raw / factor) * weights[i];
           wsum += weights[i];
         }
@@ -144,7 +153,7 @@ async function fetchSoilGrids(lat: number, lon: number) {
     const soc = pick("soc");
     const ph = pick("phh2o");
     const cec = pick("cec");
-    if (clay == null || sand == null || ph == null) return null;
+    if (clay == null || sand == null || ph == null || ph <= 0 || ph > 14 || clay > 100 || sand > 100 || clay + sand > 100.5) return null;
 
     const om = soc != null ? clamp((soc / 10) * 1.724, 0.3, 12) : 2;
 
@@ -166,27 +175,30 @@ export async function fetchSite(lat: number, lon: number): Promise<SiteData> {
   const t2m = monthlyClimatology(p, "T2M");
   const tmax = monthlyClimatology(p, "T2M_MAX");
   const tmin = monthlyClimatology(p, "T2M_MIN");
-  const ppt = monthlyClimatology(p, "PRECTOTCORR").map((v, i) => v * daysInMonth(i + 1, 2001));
-  const rh = monthlyClimatology(p, "RH2M");
-  const wind = monthlyClimatology(p, "WS2M");
-  const solar = monthlyClimatology(p, "ALLSKY_SFC_SW_DWN");
+  const ppt = monthlyClimatology(p, "PRECTOTCORR", true);
+  const rh = monthlyClimatology(p, "RH2M", false, false);
+  const wind = monthlyClimatology(p, "WS2M", false, false);
+  const solar = monthlyClimatology(p, "ALLSKY_SFC_SW_DWN", false, false);
+  if (t2m.some((t, i) => t < -95 || t > 65 || tmin[i] > t || tmax[i] < t)) throw new Error("POWER invalid temperature series");
 
   const et0 = Array.from({ length: 12 }, (_, i) =>
     hargreavesEt0(lat, t2m[i], tmax[i], tmin[i], i + 1) * daysInMonth(i + 1, 2001),
   );
 
   const annualPpt = ppt.reduce((a, b) => a + b, 0);
-  const annualEt0 = Math.max(1, et0.reduce((a, b) => a + b, 0));
+  const annualEt0 = et0.reduce((a, b) => a + b, 0);
   const mat = t2m.reduce((a, b) => a + b, 0) / 12;
-  const aridity = annualPpt / annualEt0;
+  const frozen = frozenClimate({ t2m, tmax, tmin, ppt, et0, rh, wind, solar });
+  const aridity = frozen || annualEt0 < 1 ? null : annualPpt / annualEt0;
 
-  const soilgrids = await fetchSoilGrids(lat, lon);
-  const soil = soilgrids ?? estimateSoil(annualPpt, mat);
+  // A climate-only soil proxy is not evidence of cultivable soil on frozen ground.
+  const soilgrids = frozen ? null : await fetchSoilGrids(lat, lon);
+  const soil = frozen ? null : soilgrids ?? estimateSoil(annualPpt, mat);
 
   return {
     lat,
     lon,
-    soilSource: soilgrids ? "soilgrids" : "estimated",
+    soilSource: frozen ? "unavailable" : soilgrids ? "soilgrids" : "estimated",
     climate: {
       t2m: t2m.map((v) => round(v)),
       tmax: tmax.map((v) => round(v)),
@@ -201,7 +213,7 @@ export async function fetchSite(lat: number, lon: number): Promise<SiteData> {
       ppt: round(annualPpt),
       et0: round(annualEt0),
       tmean: round(mat),
-      aridity: round(aridity, 2),
+      aridity: aridity == null ? null : round(aridity, 2),
     },
     trends: {
       t2m: round(trendPerDecade(annualTempSeries(p)), 2),
@@ -210,7 +222,7 @@ export async function fetchSite(lat: number, lon: number): Promise<SiteData> {
     hazards: {
       frost: round(tmin.filter((t) => t < 3).length / 12, 2),
       heat: round(tmax.filter((t) => t > 32).length / 12, 2),
-      drought: round(clamp(1 - aridity / 1.2, 0, 1), 2),
+      drought: round(clamp(1 - (aridity ?? 0) / 1.2, 0, 1), 2),
       erosivity: round(Math.min(1, annualPpt / 2600), 2),
     },
     soil,

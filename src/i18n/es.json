@@ -18,7 +18,8 @@
     "lat": "Latitud",
     "lon": "Longitud",
     "soilReal": "Suelo: SoilGrids",
-    "soilEstimated": "Suelo: estimado"
+    "soilEstimated": "Suelo: estimado",
+    "soilUnavailable": "Suelo: sin datos"
   },
   "crop": {
     "title": "¿Qué cultivo tienes?",
@@ -32,7 +33,8 @@
       "high": "Viable",
       "medium": "Viable con manejo",
       "low": "Riesgo alto",
-      "none": "No recomendado"
+      "none": "No recomendado",
+      "unavailable": "Sin datos suficientes"
     },
     "factors": {
       "water": "Agua",
@@ -40,7 +42,9 @@
       "soil": "Suelo",
       "risk": "Riesgo"
     },
-    "limits": "Factores limitantes"
+    "limits": "Factores limitantes",
+    "basis": "Estimación para cultivo al aire libre y de secano, sin riego ni invernadero.",
+    "season": "Ventana climática evaluada: {{from}}–{{to}}."
   },
   "limits": {
     "water_low": "Déficit hídrico: el cultivo necesita más agua de la que llueve.",
@@ -50,7 +54,12 @@
     "soil_ph": "El pH del suelo está fuera del rango ideal.",
     "soil_texture": "La textura del suelo no es la más adecuada.",
     "soil_om": "La materia orgánica del suelo es baja.",
-    "risk": "Riesgo climático elevado: sequía, calor o erosión."
+    "risk": "Riesgo climático elevado: sequía, calor o erosión.",
+    "frozen_climate": "Clima persistentemente helado: no hay condiciones para cultivar al aire libre. La nieve o el hielo no equivalen a agua disponible para el cultivo.",
+    "growing_season": "No hay una ventana continua de {{months}} meses con temperaturas compatibles con este cultivo.",
+    "heat": "Las máximas superan la tolerancia térmica del cultivo durante la ventana evaluada.",
+    "climate_missing": "Faltan datos climáticos válidos. No se puede determinar la viabilidad.",
+    "soil_unavailable": "No hay datos válidos de suelo cultivable; no se asume que el terreno sea fértil."
   },
   "site": {
     "title": "Datos del sitio",
@@ -77,7 +86,8 @@
     "sand": "Arena",
     "om": "Materia orgánica",
     "ph": "pH",
-    "cec": "CIC"
+    "cec": "CIC",
+    "noSoil": "No se estiman propiedades de suelo agrícola en un clima persistentemente helado."
   },
   "priorities": {
     "title": "Mis prioridades",
@@ -98,7 +108,8 @@
   "ranking": {
     "title": "Rotaciones recomendadas",
     "subtitle": "Mejores secuencias para este sitio",
-    "best": "Mejor opción"
+    "best": "Mejor opción",
+    "unavailable": "No se encontraron rotaciones compatibles con las condiciones de este punto para cultivo al aire libre y de secano."
   },
   "why": {
     "water_high": "Buen equilibrio hídrico: la demanda del ciclo cabe en la lluvia disponible.",

@@ -10,6 +10,7 @@ export function RankingCard({ results }: { results: Result[] }) {
 
   return (
     <Section title={t("ranking.title")} hint={t("ranking.subtitle")}>
+      {results.length === 0 && <p className="rounded-xl bg-bone p-3 text-[12px] leading-relaxed text-muted">{t("ranking.unavailable")}</p>}
       <ol className="space-y-1.5">
         {results.map((r, i) => {
           const isBest = i === 0;

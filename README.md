@@ -242,6 +242,12 @@ de `/data` se revalidan para evitar geometrías antiguas tras un despliegue.
 
 ## 10. Rendimiento
 
+Los criterios de viabilidad, perfiles indicativos, tratamiento de datos ausentes y
+limitaciones del modelo se explican en [el modelo agroclimático](docs/agronomic-model.md).
+El cálculo supone cultivo al aire libre y de secano: el frío incompatible o la falta
+de agua no se compensan con un buen suelo o con prioridades de ingreso. Las rotaciones
+solo se recomiendan si todos sus cultivos superan los requisitos básicos de la zona.
+
 | Métrica | Objetivo |
 |---|---|
 | Carga inicial (interfaz) | < 1,2 s |

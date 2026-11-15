@@ -8,6 +8,7 @@ const VERDICT_STYLE: Record<Viability["verdict"], string> = {
   medium: "bg-harvest text-bone",
   low: "bg-[#B96A20] text-bone",
   none: "bg-rust text-bone",
+  unavailable: "bg-muted text-bone",
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -17,7 +18,9 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export function ViabilityCard({ viability }: { viability: Viability }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const season = viability.season;
+  const month = (index: number) => new Intl.DateTimeFormat(i18n.resolvedLanguage ?? "es", { month: "short" }).format(new Date(2024, index % 12, 1));
 
   return (
     <Section title={t("viability.title")}>
@@ -27,7 +30,7 @@ export function ViabilityCard({ viability }: { viability: Viability }) {
             {t("viability.score")}
           </p>
           <p className="num font-display text-4xl leading-none text-ink">
-            {Math.round(viability.total)}
+            {viability.verdict === "unavailable" ? "—" : Math.round(viability.total)}
             <span className="ml-1 text-sm font-sans text-muted">/100</span>
           </p>
         </div>
@@ -37,6 +40,8 @@ export function ViabilityCard({ viability }: { viability: Viability }) {
           {t(`viability.verdict.${viability.verdict}`)}
         </span>
       </div>
+      <p className="mt-3 text-[11px] leading-relaxed text-muted">{t("viability.basis")}</p>
+      {season && <p className="mt-1 text-[11px] text-muted">{t("viability.season", { from: month(season.start), to: month(season.start + season.months - 1) })}</p>}
 
       <div className="mt-4 space-y-2.5">
         {viability.factors.map((f) => (
@@ -71,7 +76,7 @@ export function ViabilityCard({ viability }: { viability: Viability }) {
             {viability.limits.map((l) => (
               <li key={l.code} className="flex items-start gap-1.5 text-[11px] leading-snug text-ink">
                 <AlertTriangle size={12} className="mt-0.5 shrink-0 text-harvest" />
-                <span>{t(`limits.${l.code}`)}</span>
+                <span>{t(`limits.${l.code}`, { months: l.value })}</span>
               </li>
             ))}
           </ul>
