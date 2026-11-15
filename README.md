@@ -38,7 +38,9 @@ del globo, elige tu cultivo y obtén su viabilidad** junto con los datos que la 
 - **Mapa 2D con Leaflet**: zoom, arrastre, polígonos y respaldo de tiles (OpenStreetMap → Esri).
 - **Alternancia 3D / 2D** con un botón.
 - **Zoom al hacer clic**: cada clic centra y acerca a la zona seleccionada.
-- **Delimitación automática de la zona**: al hacer clic o buscar, se dibuja el límite administrativo en amarillo suave y el mapa se ajusta a él. En el globo se delimita el departamento; en el mapa 2D, el municipio.
+- **Delimitación automática de la zona**: al hacer clic o buscar, se dibuja el límite administrativo en amarillo suave y el mapa se ajusta a él. En el globo se selecciona el departamento en la vista regional y el municipio al acercarse.
+- **Detalle de Colombia en 3D**: 33 departamentos/distritos y 1.122 municipios de geoBoundaries, incluidos los vecinos de la zona seleccionada. Los archivos TopoJSON municipales se descargan por departamento y se reutilizan al navegar. Fuera de Colombia se mantiene la delimitación mediante Nominatim.
+- **Carga progresiva**: el primer mapa solo necesita `world-110m.json` (108 KB). Ríos, lagos, departamentos y municipios se añaden al acercarse; Leaflet se descarga al abrir el mapa 2D.
 - **Delimitación del municipio** en amarillo suave al buscarlo, con encuadre automático.
 - **Análisis bajo demanda** en cualquier coordenada del planeta.
 - **Buscador de lugares** con geocodificación inversa y directa.
@@ -162,7 +164,7 @@ y calcula todo en el cliente en pocos milisegundos.
 **Para usar RotaSmart**
 
 Cualquier navegador moderno (Chrome, Edge, Firefox, Safari) en computador o celular.
-Requiere WebGL2 y conexión a internet para consultar NASA POWER.
+El globo no requiere WebGL. Se necesita conexión a internet para consultar NASA POWER.
 
 ---
 
@@ -200,11 +202,15 @@ npm run test     # pruebas
 npm run build    # producción
 npm run data     # regenerar los JSON regionales del Huila (opcional)
 npm run globe    # regenerar la geometría del globo (países, ríos, lagos, ciudades)
+npm run boundaries # regenerar los límites de Colombia (departamentos y municipios)
 ```
 
 El globo **no usa ninguna API de mapas en tiempo de ejecución**: toda su geometría
-(`public/data/globe.json` y `countries-50m.json`) se genera una vez con
-Natural Earth 50m + mapshaper y viaja como archivo estático.
+(`public/data/world-110m.json`, `globe.json` y `colombia/*.json`) viaja como
+archivos estáticos. `npm run boundaries` descarga geoBoundaries gbOpen, adapta la
+orientación de los polígonos a d3 y genera TopoJSON municipal con nombres que
+incluyen un hash de contenido. Los límites de Colombia no necesitan consultas a
+Nominatim al seleccionar un punto. Los archivos usados se guardan en la caché PWA.
 
 ---
 
@@ -218,7 +224,8 @@ vercel --prod
 ```
 
 `vercel.json` aplica HSTS, `X-Content-Type-Options`, `X-Frame-Options`,
-`Referrer-Policy`, `Permissions-Policy` y caché inmutable para `/assets` y `/data`.
+`Referrer-Policy`, `Permissions-Policy` y caché inmutable para `/assets`. Los archivos
+de `/data` se revalidan para evitar geometrías antiguas tras un despliegue.
 
 ---
 

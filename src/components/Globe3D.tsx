@@ -1,293 +1,263 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
-import { geoOrthographic, geoPath, geoGraticule, geoDistance, geoArea } from "d3-geo";
-import { feature, mesh } from "topojson-client";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { geoGraticule, geoPath } from "d3-geo";
+import { feature } from "topojson-client";
+import type { Feature, FeatureCollection, Point } from "geojson";
+import type { Topology, GeometryCollection } from "topojson-specification";
 import { Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
 import { pickLocation } from "../pick";
-import { clampZoom, globePoint, indexFeatures, regionView, visibleFeatures, wrapLongitude } from "../globe";
+import { boundaryVisible, loadDepartments, loadMapData, loadMunicipalities } from "../map/boundaries";
+import type { Boundaries } from "../map/boundaries";
+import { clampZoom, createProjection, fitArea, globeRadius, inViewport, pointOnGlobe, sphericalGeometry } from "../map/geometry";
+import type { View } from "../map/geometry";
+import { indexFeatures, visibleFeatures, wrapLongitude } from "../globe";
 
-let globePromise: Promise<any> | null = null;
-function loadGlobe(): Promise<any> {
-  if (!globePromise) {
-    const base = import.meta.env.BASE_URL;
-    globePromise = Promise.all([
-      fetch(`${base}data/globe.json`).then((r) => { if (!r.ok) throw new Error("Globe data unavailable"); return r.json(); }),
-      // Países desde world-atlas (TopoJSON): orientación correcta para d3-geo
-      // y ~10k puntos, lo que mantiene el arrastre fluido.
-      fetch(`${base}data/world-110m.json`)
-        .then((r) => { if (!r.ok) throw new Error("World data unavailable"); return r.json(); })
-        .then((topo) => ({ countries: feature(topo, topo.objects.countries),
-          borders: mesh(topo, topo.objects.countries, (a, b) => a !== b) })),
-    ])
-      .then(([layers, world]) => {
-        const combined = { ...layers, ...world };
-        return { ...combined, index: Object.fromEntries(["countries", "admin1", "rivers", "lakes"]
-          .map((key) => [key, indexFeatures(combined[key])])) };
-      })
-      .catch(() => { globePromise = null; return null; });
-  }
-  return globePromise;
-}
-
-/* Paleta editorial: tierra hueso sobre ocÃ©ano azul profundo */
-const OCEAN_from = "#1D3E5E";
-const OCEAN_to = "#0A1826";
+type Layers = {
+  admin1: FeatureCollection;
+  rivers: FeatureCollection;
+  lakes: FeatureCollection;
+  cities: FeatureCollection<Point, { name: string; pop: number }>;
+};
+type Label = { name: string; x: number; y: number; department: boolean };
 const LAND = "#C9D8BA";
-const LAND_STROKE = "rgba(88,72,44,0.85)";
-const ADMIN_STROKE = "rgba(112,96,64,0.45)";
-const RIVER = "rgba(38,104,146,0.95)";
-const LAKE = "#4A93C6";
-const GRAT_LAND = "rgba(90,78,52,0.13)";
-const GRAT_OCEAN = "rgba(255,255,255,0.05)";
-const AREA_FILL = "rgba(255,201,64,0.24)";
-const AREA_STROKE = "#FFCC55";
-const LABEL = "#2A2418";
-const LABEL_HALO = "rgba(255,252,242,0.92)";
-const GRATICULE = geoGraticule().step([10, 10])();
+const graticule = geoGraticule().step([10, 10])();
 
 export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
   const { t } = useTranslation();
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef(0);
-  const svgRef = useRef<SVGSVGElement | null>(null);
+  const dragRef = useRef<{ id: number; x: number; y: number; rot: [number, number]; moved: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
-
-  const lat = useStore((s) => s.lat);
-  const lon = useStore((s) => s.lon);
-  const polygon = useStore((s) => s.polygon);
-  const bbox = useStore((s) => s.bbox);
-  const flyToken = useStore((s) => s.flyToken);
-
-  const [size, setSize] = useState({ w: 900, h: 700 });
-  const [data, setData] = useState<any>(null);
-  const [rotation, setRotation] = useState<[number, number]>(() => [-useStore.getState().lon, -useStore.getState().lat]);
-  const [zoom, setZoom] = useState(1);
-  const [loadFailed, setLoadFailed] = useState(false);
   const flightRef = useRef(0);
-  const viewRef = useRef({ rotation, zoom });
-  viewRef.current = { rotation, zoom };
-  const animateTo = (targetRotation: [number, number], targetZoom: number) => {
+  const pendingView = useRef<View | null>(null);
+  const lat = useStore(s => s.lat);
+  const lon = useStore(s => s.lon);
+  const polygon = useStore(s => s.polygon);
+  const bbox = useStore(s => s.bbox);
+  const flyToken = useStore(s => s.flyToken);
+  const [size, setSize] = useState({ w: 900, h: 700 });
+  const [view, setView] = useState<View>(() => ({ rotation: [-lon, -lat], zoom: 1 }));
+  const viewRef = useRef(view);
+  const [countries, setCountries] = useState<FeatureCollection | null>(null);
+  const [details, setDetails] = useState<Layers | null>(null);
+  const [departments, setDepartments] = useState<Boundaries | null>(null);
+  const [municipalities, setMunicipalities] = useState<Record<string, Boundaries>>({});
+  const [baseError, setBaseError] = useState(false);
+  const [detailError, setDetailError] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const zoom = view.zoom;
+
+  // One complete view per frame, always using the latest pointer position.
+  const scheduleView = useCallback((next: View) => {
+    pendingView.current = next;
+    viewRef.current = next;
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0;
+      if (pendingView.current) setView(pendingView.current);
+      pendingView.current = null;
+    });
+  }, []);
+  const animateTo = useCallback((target: View) => {
     cancelAnimationFrame(flightRef.current);
     const start = viewRef.current;
-    const delta = wrapLongitude(targetRotation[0] - start.rotation[0]);
+    const delta = wrapLongitude(target.rotation[0] - start.rotation[0]);
     const started = performance.now();
-    const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650;
+    const duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 650;
     const frame = (now: number) => {
       const progress = duration ? Math.min(1, (now - started) / duration) : 1;
       const ease = 1 - (1 - progress) ** 3;
-      setRotation([start.rotation[0] + delta * ease, start.rotation[1] + (targetRotation[1] - start.rotation[1]) * ease]);
-      setZoom(Math.exp(Math.log(start.zoom) + Math.log(targetZoom / start.zoom) * ease));
+      scheduleView({ rotation: [wrapLongitude(start.rotation[0] + delta * ease),
+        start.rotation[1] + (target.rotation[1] - start.rotation[1]) * ease],
+        zoom: Math.exp(Math.log(start.zoom) + Math.log(target.zoom / start.zoom) * ease) });
       if (progress < 1) flightRef.current = requestAnimationFrame(frame);
     };
     flightRef.current = requestAnimationFrame(frame);
-  };
-  const dragRef = useRef<{ id: number; x: number; y: number; rot: [number, number]; moved: number } | null>(null);
+  }, [scheduleView]);
+  useEffect(() => () => { cancelAnimationFrame(rafRef.current); cancelAnimationFrame(flightRef.current); }, []);
 
   useEffect(() => {
-    let active = true;
-    loadGlobe().then((value) => { if (active) { setData(value); setLoadFailed(!value); } });
-    return () => { active = false; cancelAnimationFrame(rafRef.current); cancelAnimationFrame(flightRef.current); };
-  }, []);
-
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const measure = () => setSize({ w: el.clientWidth, h: el.clientHeight });
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  /* encajar la zona seleccionada */
-  useEffect(() => {
-    if (flyToken === 0) return;
-    const target = regionView(lat, lon, bbox, wrapRef.current?.clientWidth || size.w, wrapRef.current?.clientHeight || size.h);
-    animateTo(target.rotation, target.zoom);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flyToken]);
-
-  const radius = Math.max(60, Math.min(size.w, size.h) / 2 - 22);
-  const cx = size.w / 2;
-  const cy = size.h / 2;
-
-  // Scale the actual projection: sphere, boundaries, labels and hit testing stay aligned.
-  const projection = useMemo(
-    () =>
-      geoOrthographic()
-        .translate([cx, cy])
-        .scale(radius * zoom)
-        .rotate([rotation[0], rotation[1], 0])
-        .clipAngle(Math.min(90, Math.asin(Math.min(1, Math.hypot(cx, cy) / (radius * zoom))) * 180 / Math.PI + 1))
-        .clipExtent([[0, 0], [size.w, size.h]])
-        .precision(0.6),
-    [cx, cy, radius, rotation, zoom],
-  );
-
-  const path = useMemo(() => geoPath(projection), [projection]);
-
-  const shapes = useMemo(() => {
-    if (!data) return null;
-    const center: [number, number] = [-rotation[0], -rotation[1]];
-    const angle = Math.asin(Math.min(1, Math.hypot(cx, cy) / (radius * zoom))) + .02;
-    const visible = (key: string) => visibleFeatures(data.index[key], center, angle);
-    const countries = path(visible("countries")) ?? "";
-    return {
-      sphere: path({ type: "Sphere" } as any) ?? "",
-      graticule: path(GRATICULE) ?? "",
-      countries,
-      borders: zoom > 2 ? countries : path(data.borders) ?? "",
-      admin1: zoom > 2.5 ? path(visible("admin1")) ?? "" : "",
-      rivers: zoom > 2 ? path(visible("rivers")) ?? "" : "",
-      lakes: path(visible("lakes")) ?? "",
-    };
-  }, [data, path, zoom]);
-
-  /* Nominatim devuelve anillos en convenciÃ³n RFC 7946; d3-geo usa la esfÃ©rica
-     (opuesta). Si el Ã¡rea supera media esfera, invertimos los anillos. */
-  const areaFeature = useMemo(() => {
-    if (!polygon) return null;
-    const geometry = JSON.parse(JSON.stringify(polygon));
-    const polys =
-      geometry.type === "Polygon"
-        ? [geometry.coordinates]
-        : geometry.type === "MultiPolygon"
-          ? geometry.coordinates
-          : null;
-    if (!polys) return null;
-    for (const poly of polys) {
-      const probe = {
-        type: "Feature",
-        properties: {},
-        geometry: { type: "Polygon", coordinates: poly },
-      };
-      if (geoArea(probe as any) > Math.PI * 2) {
-        for (const ring of poly) ring.reverse();
-      }
-    }
-    return { type: "Feature", properties: {}, geometry } as any;
-  }, [polygon]);
-
-  const areaPath = useMemo(
-    () => (areaFeature && path ? path(areaFeature) ?? "" : ""),
-    [areaFeature, path],
-  );
-
-  /* ciudades visibles, con etiquetas segÃºn el nivel de zoom */
-  const cityPoints = useMemo(() => {
-    if (!data?.cities) return [];
-    const center: [number, number] = [-rotation[0], -rotation[1]];
-    const minPop = zoom > 5 ? 80000 : zoom > 2.5 ? 700000 : 2500000;
-    const candidates = data.cities.features
-      .filter((f: any) => (f.properties.pop ?? 0) >= minPop)
-      .map((f: any) => {
-        const [flon, flat] = f.geometry.coordinates;
-        if (geoDistance([flon, flat], center) > Math.PI / 2 - 0.06) return null;
-        const p = projection([flon, flat]);
-        if (!p) return null;
-        const pop: number = f.properties.pop;
-        return {
-          name: f.properties.name as string,
-          pop,
-          x: p[0],
-          y: p[1],
-          r: pop > 8000000 ? 3 : pop > 3000000 ? 2.3 : pop > 1000000 ? 1.8 : 1.3,
-          label: zoom > 2.4 || pop > 5000000,
-        } as const;
-      })
-      .filter(Boolean)
-      .filter((c: any) => c.x > -60 && c.x < size.w + 60 && c.y > -30 && c.y < size.h + 30)
-      .sort((a: any, b: any) => b.pop - a.pop)
-      .slice(0, 80);
-    const visible: typeof candidates = [];
-    for (const city of candidates) {
-      if (visible.some((other: any) => Math.abs(city.y - other.y) < 16 && Math.abs(city.x - other.x) < Math.max(city.name.length, other.name.length) * 6 + 14)) continue;
-      visible.push(city);
-      if (visible.length >= (zoom > 5 ? 34 : 18)) break;
-    }
-    return visible;
-  }, [data, projection, rotation, zoom, cx, cy, size.w, size.h]);
-
-  const marker = useMemo(() => {
-    const p = projection([lon, lat]);
-    if (!p) return null;
-    const center: [number, number] = [-rotation[0], -rotation[1]];
-    if (geoDistance([lon, lat], center) >= Math.PI / 2) return null;
-    return { x: p[0], y: p[1] };
-  }, [projection, lon, lat, rotation, zoom, cx, cy]);
-
-  /* rotaciÃ³n con raF para no saturar el hilo */
-  const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (!pointersRef.current.has(e.pointerId)) return;
-    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    const points = [...pointersRef.current.values()];
-    if (points.length > 1 && pinchRef.current) {
-      if (dragRef.current) dragRef.current.moved = 100;
-      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
-      setZoom(clampZoom(pinchRef.current.zoom * distance / pinchRef.current.distance));
-      return;
-    }
-    const d = dragRef.current;
-    if (!d || d.id !== e.pointerId) return;
-    const dx = e.clientX - d.x;
-    const dy = e.clientY - d.y;
-    d.moved = Math.max(d.moved, Math.abs(dx) + Math.abs(dy));
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = 0;
-      const k = 90 / (radius * zoom);
-      if (dragRef.current !== d) return;
-      setRotation([d.rot[0] + dx * k, Math.max(-90, Math.min(90, d.rot[1] - dy * k))]);
-    });
-  };
-
-  const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
-    pointersRef.current.delete(e.pointerId);
-    pinchRef.current = null;
-    const d = dragRef.current;
-    dragRef.current = null;
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
-    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
-    if (!d || d.id !== e.pointerId || d.moved > 6 || e.type === 'pointercancel') return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const gx = e.clientX - rect.left;
-    const gy = e.clientY - rect.top;
-    const inv = globePoint(gx, gy, size.w, size.h, radius, rotation, zoom);
-    if (inv) {
-      animateTo([-inv[0], -inv[1]], Math.max(6, zoom));
-      pickLocation(inv[1], inv[0], 10);
-    }
-  };
-
-  useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg) return;
+    const element = wrapRef.current;
+    if (!element) return;
     const wheel = (event: WheelEvent) => {
       event.preventDefault();
       cancelAnimationFrame(flightRef.current);
       const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? size.h : 1);
-      setZoom((z) => clampZoom(z * Math.exp(-delta * .002)));
+      scheduleView({ ...viewRef.current, zoom: clampZoom(viewRef.current.zoom * Math.exp(-Math.max(-100, Math.min(100, delta)) * 0.002)) });
     };
-    svg.addEventListener('wheel', wheel, { passive: false });
-    return () => svg.removeEventListener('wheel', wheel);
-  }, [size.h]);
+    element.addEventListener("wheel", wheel, { passive: false });
+    return () => element.removeEventListener("wheel", wheel);
+  }, [scheduleView, size.h]);
 
-  const zoomBy = (factor: number) =>
-    animateTo(viewRef.current.rotation, clampZoom(viewRef.current.zoom * factor));
+  useEffect(() => {
+    let active = true;
+    setBaseError(false);
+    // Only the small world topology is required for the first interactive frame.
+    loadMapData<Topology<{ countries: GeometryCollection }>>("world-110m.json")
+      .then(topo => { if (active) setCountries(feature(topo, topo.objects.countries)); })
+      .catch(() => { if (active) setBaseError(true); });
+    return () => { active = false; };
+  }, [retry]);
 
-  const reset = () => {
-    animateTo([-lon, -lat], 1);
-  };
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      if (w && h) setSize(previous => previous.w === w && previous.h === h ? previous : { w, h });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (flyToken === 0) return;
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = 0;
+    pendingView.current = null;
+    const next: View = bbox ? fitArea(bbox, size) : {
+      rotation: [-lon, -lat], zoom: Math.max(6, viewRef.current.zoom),
+    };
+    animateTo(next);
+    // flyToken explicitly requests framing. Coordinate changes alone must not undo rotation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flyToken, size.w, size.h]);
+
+  const projection = useMemo(() => createProjection(view, size), [view, size]);
+  const path = useMemo(() => geoPath(projection).digits(2), [projection]);
+  const cx = size.w / 2;
+  const cy = size.h / 2;
+  const radius = globeRadius(size) * zoom;
+
+  const nearColombia = zoom >= 3 && inViewport([-74, 4], projection, size, radius * 0.25) !== null;
+  useEffect(() => {
+    if (!nearColombia || departments) return;
+    let active = true;
+    loadDepartments().then(data => { if (active) setDepartments(data); })
+      .catch(() => { if (active) setDetailError(true); });
+    return () => { active = false; };
+  }, [nearColombia, departments, retry]);
+
+  const showDetails = zoom >= 2.5;
+  useEffect(() => {
+    if (!showDetails || details) return;
+    let active = true;
+    loadMapData<Layers>("globe.json").then(data => { if (active) setDetails(data); })
+      .catch(() => { if (active) setDetailError(true); });
+    return () => { active = false; };
+  }, [showDetails, details, retry]);
+
+  const visibleDepartments = useMemo(() => departments?.features.filter(f => boundaryVisible(f, projection, size)) ?? [], [departments, projection, size]);
+  const wantedFiles = zoom >= 12 ? visibleDepartments.map(f => f.properties.file).sort().join(",") : "";
+  useEffect(() => {
+    if (!wantedFiles || !departments) return;
+    const wanted = new Set(wantedFiles.split(","));
+    const missing = departments.features.filter(f => wanted.has(f.properties.file!) && !municipalities[f.properties.id]);
+    if (!missing.length) return;
+    let active = true;
+    setLoadingDetail(true);
+    setDetailError(false);
+    Promise.allSettled(missing.map(async department => [department.properties.id, await loadMunicipalities(department)] as const))
+      .then(results => {
+        if (!active) return;
+        const loaded: Record<string, Boundaries> = {};
+        for (const result of results) {
+          if (result.status === "fulfilled") loaded[result.value[0]] = result.value[1];
+          else setDetailError(true);
+        }
+        setMunicipalities(previous => ({ ...previous, ...loaded }));
+        setLoadingDetail(false);
+      });
+    return () => { active = false; setLoadingDetail(false); };
+    // Changing cached collections alone must not retry a failed download in a loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantedFiles, departments, retry]);
+
+  const visibleMunicipalities = useMemo(() => zoom < 12 ? [] :
+    visibleDepartments.flatMap(d => municipalities[d.properties.id]?.features ?? []).filter(f => boundaryVisible(f, projection, size)),
+  [municipalities, visibleDepartments, projection, size, zoom]);
+  const regionalSurface = departments && zoom >= 3;
+  const worldIndex = useMemo(() => countries ? indexFeatures(countries) : [], [countries]);
+  const detailIndex = useMemo(() => details ? {
+    admin1: indexFeatures(details.admin1), rivers: indexFeatures(details.rivers), lakes: indexFeatures(details.lakes),
+  } : null, [details]);
+  const center: [number, number] = [-view.rotation[0], -view.rotation[1]];
+  const visibleAngle = Math.asin(Math.min(1, Math.hypot(cx, cy) / radius)) + 0.02;
+  const shapes = useMemo(() => ({
+    countries: countries ? path({ type: "FeatureCollection", features: visibleFeatures(worldIndex, center, visibleAngle).features.filter((f: Feature) => !regionalSurface || String(f.id) !== "170") }) ?? "" : "",
+    departments: regionalSurface ? path({ type: "FeatureCollection", features: visibleDepartments }) ?? "" : "",
+    municipalities: visibleMunicipalities.length ? path({ type: "FeatureCollection", features: visibleMunicipalities }) ?? "" : "",
+    admin1: showDetails && detailIndex ? path(visibleFeatures(detailIndex.admin1, center, visibleAngle)) ?? "" : "",
+    rivers: showDetails && zoom < 12 && detailIndex ? path(visibleFeatures(detailIndex.rivers, center, visibleAngle)) ?? "" : "",
+    lakes: showDetails && zoom < 12 && detailIndex ? path(visibleFeatures(detailIndex.lakes, center, visibleAngle)) ?? "" : "",
+    graticule: zoom < 12 ? path(graticule) ?? "" : "",
+  }), [countries, worldIndex, regionalSurface, visibleDepartments, visibleMunicipalities, path, detailIndex, showDetails, zoom]);
+  const area = useMemo(() => sphericalGeometry(polygon), [polygon]);
+  const areaPath = useMemo(() => area ? path(area) ?? "" : "", [area, path]);
+  const marker = useMemo(() => inViewport([lon, lat], projection, size), [lon, lat, projection, size]);
+
+  const labels = useMemo(() => {
+    const candidates: Label[] = [];
+    if (zoom >= 3) {
+      for (const f of visibleDepartments) {
+        const point = inViewport(f.properties.center, projection, size, 0);
+        if (point) candidates.push({ name: f.properties.name, x: point[0], y: point[1], department: true });
+      }
+    }
+    if (zoom >= 16) {
+      for (const f of visibleMunicipalities) {
+        const point = inViewport(f.properties.center, projection, size, 0);
+        if (point) candidates.push({ name: f.properties.name, x: point[0], y: point[1], department: false });
+      }
+    }
+    if (details) {
+      for (const f of details.cities.features) {
+        if (f.properties.pop < (zoom > 5 ? 150000 : 2500000)) continue;
+        const point = inViewport(f.geometry.coordinates as [number, number], projection, size, 0);
+        if (point) candidates.push({ name: f.properties.name, x: point[0], y: point[1], department: false });
+      }
+    }
+    candidates.sort((a, b) => Number(b.department) - Number(a.department) ||
+      Math.hypot(a.x - size.w / 2, a.y - size.h / 2) - Math.hypot(b.x - size.w / 2, b.y - size.h / 2));
+    const placed: Label[] = [];
+    for (const candidate of candidates) {
+      if (candidate.x < 245 && candidate.y < 120 || candidate.x > size.w - 55 && candidate.y < 150 || candidate.y > size.h - 55) continue;
+      if (placed.some(label => Math.abs(label.y - candidate.y) < 20 && Math.abs(label.x - candidate.x) < (label.name.length + candidate.name.length) * 3.2 + 12)) continue;
+      placed.push(candidate);
+      if (placed.length >= 55) break;
+    }
+    return placed;
+  }, [details, projection, size, visibleDepartments, visibleMunicipalities, zoom]);
+
+  const zoomBy = (factor: number) => animateTo({ ...viewRef.current, zoom: clampZoom(viewRef.current.zoom * factor) });
+  const reset = () => animateTo({ rotation: [-lon, -lat], zoom: 1 });
+  const focus = () => animateTo(bbox ? fitArea(bbox, size) : { rotation: [-lon, -lat], zoom: 12 });
+  const retryData = () => { setDetailError(false); setRetry(value => value + 1); };
 
   return (
     <div ref={wrapRef} className="absolute inset-0 overflow-hidden bg-[radial-gradient(ellipse_at_center,#18364d,#080f1c)]">
-      <svg
-        width={size.w}
-        height={size.h}
+      <svg width={size.w} height={size.h} role="img" tabIndex={0} aria-label={t("map.accessibleGlobe")}
         className="block touch-none cursor-grab select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300 active:cursor-grabbing"
-        onPointerDown={(e) => {
+        onKeyDown={e => {
+          if (["+", "=", "-", "Home", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault();
+          if (e.key === "+" || e.key === "=") zoomBy(1.5);
+          else if (e.key === "-") zoomBy(1 / 1.5);
+          else if (e.key === "Home") reset();
+          else if (e.key.startsWith("Arrow")) {
+            cancelAnimationFrame(flightRef.current);
+            const current = viewRef.current;
+            const step = 12 / current.zoom;
+            scheduleView({ ...current, rotation: [wrapLongitude(current.rotation[0] + (e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0)),
+              Math.max(-90, Math.min(90, current.rotation[1] + (e.key === "ArrowUp" ? step : e.key === "ArrowDown" ? -step : 0)))] });
+          }
+        }}
+        onPointerDown={e => {
           if (e.button !== 0) return;
           cancelAnimationFrame(flightRef.current);
           e.currentTarget.setPointerCapture(e.pointerId);
@@ -295,189 +265,110 @@ export function Globe3D({ onRequestFlat }: { onRequestFlat?: () => void }) {
           const points = [...pointersRef.current.values()];
           if (points.length > 1) {
             if (dragRef.current) dragRef.current.moved = 100;
-            pinchRef.current = { distance: Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y)), zoom };
+            pinchRef.current = { distance: Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y)), zoom: viewRef.current.zoom };
             return;
           }
-          dragRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, rot: rotation, moved: 0 };
+          dragRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, rot: viewRef.current.rotation, moved: 0 };
         }}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onLostPointerCapture={(e) => {
-          pointersRef.current.delete(e.pointerId);
-          if (dragRef.current?.id === e.pointerId) dragRef.current = null;
-        }}
-        ref={svgRef}
-        tabIndex={0}
-        role="img"
-        aria-label={t('map.accessibleGlobe')}
-        onKeyDown={(e) => {
-          if (['+', '=', '-', 'Home', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) e.preventDefault();
-          if (e.key === '+' || e.key === '=') zoomBy(1.5);
-          else if (e.key === '-') zoomBy(1 / 1.5);
-          else if (e.key === 'Home') reset();
-          else if (e.key.startsWith('Arrow')) {
-            cancelAnimationFrame(flightRef.current);
-            const step = 12 / zoom;
-            setRotation(([x, y]) => [x + (e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0),
-              Math.max(-90, Math.min(90, y + (e.key === 'ArrowUp' ? step : e.key === 'ArrowDown' ? -step : 0)))]);
+        onPointerMove={e => {
+          if (!pointersRef.current.has(e.pointerId)) return;
+          pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          const points = [...pointersRef.current.values()];
+          if (points.length > 1 && pinchRef.current) {
+            const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+            scheduleView({ ...viewRef.current, zoom: clampZoom(pinchRef.current.zoom * distance / pinchRef.current.distance) });
+            return;
           }
+          const drag = dragRef.current;
+          if (!drag || drag.id !== e.pointerId) return;
+          const dx = e.clientX - drag.x;
+          const dy = e.clientY - drag.y;
+          drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy));
+          const k = 180 / (Math.PI * globeRadius(size) * viewRef.current.zoom);
+          scheduleView({ zoom: viewRef.current.zoom, rotation: [wrapLongitude(drag.rot[0] + dx * k), Math.max(-90, Math.min(90, drag.rot[1] - dy * k))] });
         }}
-      >
+        onPointerUp={e => {
+          const drag = dragRef.current;
+          dragRef.current = null;
+          pointersRef.current.delete(e.pointerId);
+          pinchRef.current = null;
+          if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+          if (!drag || drag.id !== e.pointerId || drag.moved > 6) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const point = pointOnGlobe(e.clientX - rect.left, e.clientY - rect.top, projection);
+          if (point) pickLocation(point[1], point[0], zoom >= 12 ? 10 : 6);
+        }}
+        onPointerCancel={e => { pointersRef.current.delete(e.pointerId); pinchRef.current = null; dragRef.current = null; }}
+        onLostPointerCapture={e => { pointersRef.current.delete(e.pointerId); pinchRef.current = null; if (dragRef.current?.id === e.pointerId) dragRef.current = null; }}>
         <defs>
           <radialGradient id="g-ocean" cx="34%" cy="28%" r="78%">
-            <stop offset="0%" stopColor={OCEAN_from} />
-            <stop offset="65%" stopColor="#12293F" />
-            <stop offset="100%" stopColor={OCEAN_to} />
+            <stop offset="0%" stopColor="#1D3E5E" /><stop offset="65%" stopColor="#12293F" /><stop offset="100%" stopColor="#0A1826" />
           </radialGradient>
-          <radialGradient id="g-halo" cx="50%" cy="50%" r="50%">
-            <stop offset="82%" stopColor="rgba(90,150,200,0.20)" />
-            <stop offset="93%" stopColor="rgba(90,150,200,0.08)" />
-            <stop offset="100%" stopColor="rgba(90,150,200,0)" />
+          <radialGradient id="g-halo">
+            <stop offset="90%" stopColor="rgba(90,150,200,0.2)" /><stop offset="100%" stopColor="rgba(90,150,200,0)" />
           </radialGradient>
-          {/* limbo: aclara el centro y oscurece el borde para dar volumen */}
           <radialGradient id="g-shade" cx="38%" cy="34%" r="72%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="55%" stopColor="rgba(255,255,255,0)" />
-            <stop offset="86%" stopColor="rgba(6,14,24,0.22)" />
-            <stop offset="100%" stopColor="rgba(6,14,24,0.42)" />
+            <stop offset="0%" stopColor="rgba(255,255,255,0.10)" /><stop offset="55%" stopColor="rgba(255,255,255,0)" />
+            <stop offset="86%" stopColor="rgba(6,14,24,0.22)" /><stop offset="100%" stopColor="rgba(6,14,24,0.42)" />
           </radialGradient>
-          <clipPath id="g-sphere">
-            <circle cx={cx} cy={cy} r={radius * zoom} />
-          </clipPath>
+          <clipPath id="g-sphere"><circle cx={cx} cy={cy} r={radius} /></clipPath>
         </defs>
-
-        {/* atmÃ³sfera */}
-        <circle cx={cx} cy={cy} r={radius * zoom + 16} fill="url(#g-halo)" />
-
-        {shapes && (
-          <>
-            {/* ocÃ©ano base */}
-            <path d={shapes.sphere} fill="url(#g-ocean)" />
-
-            <g clipPath="url(#g-sphere)">
-              {/* Projected geometry is clipped to the viewport. */}
-              <g>
-                {/* retÃ­cula */}
-                <path d={shapes.graticule} fill="none" stroke={GRAT_OCEAN} strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
-
-                {/* tierra y lagos con evenodd: el relleno no depende del sentido de los anillos */}
-                <path d={shapes.countries} fill={LAND} stroke="none" strokeLinejoin="round" />
-                <path d={shapes.lakes} fill={LAKE} stroke="none" />
-
-                {/* rÃ­os y retÃ­cula de tierra */}
-                <path d={shapes.rivers} fill="none" stroke={RIVER} strokeWidth={Math.min(1.8, 0.7 + zoom * 0.09)} vectorEffect="non-scaling-stroke" strokeLinecap="round" />
-                <path d={shapes.graticule} fill="none" stroke={GRAT_LAND} strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
-
-                {/* lÃ­mites de paÃ­ses siempre; subdivisiones solo al acercar
-                    (el conjunto de subdivisiones es incompleto a escala mundial) */}
-                {zoom > 2.5 && (
-                  <path d={shapes.admin1} fill="none" stroke={ADMIN_STROKE} strokeWidth={0.7} vectorEffect="non-scaling-stroke" />
-                )}
-                <path
-                  d={shapes.borders}
-                  fill="none"
-                  stroke={LAND_STROKE}
-                  strokeWidth={Math.min(1.9, 0.85 + zoom * 0.11)}
-                  vectorEffect="non-scaling-stroke"
-                  strokeLinejoin="round"
-                />
-
-                {areaPath && (
-                  <path
-                    d={areaPath}
-                    fill={AREA_FILL}
-                    fillRule="evenodd"
-                    stroke={AREA_STROKE}
-                    strokeWidth={2.6}
-                    strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                )}
-              </g>
-
-              {/* sombreado de limbo: da volumen esfÃ©rico a cualquier zoom */}
-              <circle cx={cx} cy={cy} r={radius * zoom} fill="url(#g-shade)" pointerEvents="none" />
-            </g>
-
-            {/* borde del planeta */}
-            <path d={shapes.sphere} fill="none" stroke="rgba(150,195,230,0.30)" strokeWidth={1} />
-          </>
-        )}
-
-        {/* ciudades y etiquetas: tamaÃ±o constante en pantalla */}
-        {cityPoints.map((c: any, i: number) => (
-          <g key={`${c.name}-${i}`}>
-            <circle cx={c.x} cy={c.y} r={c.r} fill="#2A2A24" stroke={LABEL} strokeWidth={0.7} />
-            {c.label && (
-              <text
-                x={c.x + c.r + 2.5}
-                y={c.y + 2.4}
-                fontSize={9}
-                fill={LABEL}
-                stroke={LABEL_HALO}
-                strokeWidth={2.4}
-                paintOrder="stroke"
-                style={{ fontFamily: "var(--font-sans)", letterSpacing: "0.01em" }}
-              >
-                {c.name}
-              </text>
-            )}
-          </g>
-        ))}
-
-        {/* marcador del punto analizado */}
-        {marker && (
-          <g pointerEvents="none">
-            <circle cx={marker.x} cy={marker.y} r={11} fill="rgba(217,149,0,0.22)" />
-            <circle cx={marker.x} cy={marker.y} r={7} fill="none" stroke={AREA_STROKE} strokeOpacity={0.55} strokeWidth={1} />
-            <circle cx={marker.x} cy={marker.y} r={3.6} fill="#D99500" stroke="#FFFDF6" strokeWidth={1.6} />
-          </g>
-        )}
+        {/* Draw the sphere immediately; country and local detail loads independently. */}
+        <circle cx={cx} cy={cy} r={radius + 16} fill="url(#g-halo)" />
+        <circle cx={cx} cy={cy} r={radius} fill="url(#g-ocean)" />
+        <g clipPath="url(#g-sphere)">
+          <path d={shapes.graticule} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={0.5} />
+          <path data-layer="countries" d={shapes.countries} fill={LAND} stroke="#796E52" strokeWidth={0.9} strokeLinejoin="round" />
+          <path data-layer="departments" d={shapes.departments} fill={LAND} stroke="#75654A" strokeWidth={1.3} strokeLinejoin="round" />
+          <path d={shapes.lakes} fill="#4A93C6" />
+          <path d={shapes.rivers} fill="none" stroke="rgba(38,104,146,0.75)" strokeWidth={0.9} />
+          <path d={shapes.admin1} fill="none" stroke="rgba(112,96,64,0.5)" strokeWidth={0.75} />
+          <path data-layer="municipalities" d={shapes.municipalities} fill="none" stroke="rgba(112,96,64,0.65)" strokeWidth={0.65} strokeLinejoin="round" />
+          <path data-layer="selected-area" d={areaPath} fill="rgba(255,201,64,0.25)" fillRule="evenodd" stroke="#C9860A" strokeWidth={2.5} strokeLinejoin="round" />
+          <circle cx={cx} cy={cy} r={radius} fill="url(#g-shade)" pointerEvents="none" />
+        </g>
+        <circle cx={cx} cy={cy} r={radius} fill="none" stroke="rgba(150,195,230,0.3)" />
+        <g pointerEvents="none" style={{ fontFamily: "var(--font-sans)" }}>
+          {labels.map((label, index) => (
+            <text key={`${label.name}-${index}`} x={label.x} y={label.y} textAnchor="middle"
+              fontSize={label.department ? 11 : 10} fontWeight={label.department ? 650 : 450}
+              fill={label.department ? "#5C4C30" : "#2A2418"} stroke="rgba(255,252,242,0.95)" strokeWidth={3} paintOrder="stroke">
+              {label.name}
+            </text>
+          ))}
+        </g>
+        {marker && <g pointerEvents="none">
+          <circle cx={marker[0]} cy={marker[1]} r={11} fill="rgba(217,149,0,0.22)" />
+          <circle cx={marker[0]} cy={marker[1]} r={5} fill="#D99500" stroke="#FFFDF6" strokeWidth={1.8} />
+        </g>}
       </svg>
 
-      {!data && <div role="status" className="absolute inset-0 grid place-items-center pointer-events-none">
-        <div className="pointer-events-auto rounded-xl border border-white/15 bg-slate-950/90 p-4 text-sm text-white">
-          {t(loadFailed ? 'map.loadError' : 'map.loading')}
-          {loadFailed && <button type="button" onClick={() => { setLoadFailed(false); loadGlobe().then((value) => { setData(value); setLoadFailed(!value); }); }} className="ml-3 underline">{t('map.retry')}</button>}
-        </div>
-      </div>}
-      {/* controles de zoom */}
       <div className="absolute right-3 top-3 z-10 flex flex-col gap-1.5">
         {[
           { icon: Plus, label: t("map.zoomIn"), fn: () => zoomBy(1.5) },
           { icon: Minus, label: t("map.zoomOut"), fn: () => zoomBy(1 / 1.5) },
-          { icon: Maximize2, label: t("map.focusRegion"), fn: () => { const target = regionView(lat, lon, bbox, size.w, size.h); animateTo(target.rotation, target.zoom); } },
+          { icon: Maximize2, label: t("map.focusArea"), fn: focus },
           { icon: RotateCcw, label: t("map.resetView"), fn: reset },
         ].map(({ icon: Icon, label, fn }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={fn}
-            aria-label={label}
-            title={label}
-            className="grid h-10 w-10 place-items-center rounded-lg border border-white/15 bg-black/45 text-white/80 backdrop-blur transition-colors hover:bg-white/15 hover:text-white"
-          >
+          <button key={label} type="button" onClick={fn} aria-label={label} title={label}
+            className="grid h-10 w-10 place-items-center rounded-lg border border-white/15 bg-black/45 text-white/80 backdrop-blur transition-colors hover:bg-white/15 hover:text-white">
             <Icon size={14} strokeWidth={1.9} />
           </button>
         ))}
       </div>
-
-      {/* indicador de zoom */}
       <div className="pointer-events-none absolute bottom-4 right-3 z-10 rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-white/55 backdrop-blur">
         {t("map.zoom")} ×{zoom.toFixed(zoom < 10 ? 1 : 0)}
       </div>
-
-      {/* al acercar, ofrecer el detalle real del mapa 2D */}
-      {zoom >= 4.5 && onRequestFlat && (
-        <button
-          type="button"
-          onClick={onRequestFlat}
-          className="absolute bottom-14 left-1/2 z-10 -translate-x-1/2 rounded-full border border-harvest/40 bg-[#1a1408]/70 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-harvest backdrop-blur transition-colors hover:bg-harvest/20"
-        >
-          {t("map.detail2d")}
-        </button>
+      {(!countries || loadingDetail || detailError) && (
+        <div role="status" className="absolute bottom-14 left-3 z-10 max-w-[250px] rounded-lg border border-white/15 bg-black/65 px-3 py-2 text-[11px] text-white/80 backdrop-blur">
+          {baseError ? t("map.loadError") : detailError ? t("map.detailError") : loadingDetail ? t("map.loadingDetail") : t("map.loadingGlobe")}
+          {(baseError || detailError) && <button type="button" className="ml-2 underline" onClick={retryData}>{t("map.retry")}</button>}
+          {baseError && onRequestFlat && <button type="button" className="ml-2 underline" onClick={onRequestFlat}>{t("map.flat")}</button>}
+        </div>
       )}
+      <div className="pointer-events-none absolute bottom-1 left-3 text-[8px] text-white/50">
+        Natural Earth · {departments ? "geoBoundaries (CC BY 4.0)" : ""}
+      </div>
     </div>
   );
 }

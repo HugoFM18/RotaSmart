@@ -9,12 +9,11 @@ type Store = {
   place: string | null;
   polygon: any | null;
   bbox: BBox | null;
+  areaStatus: "idle" | "loading" | "ready" | "unavailable";
   crop: CropId;
   priorities: Priorities;
   scenario: { rain: number; temp: number };
   flyToken: number;
-  areaStatus: "idle" | "loading" | "ready" | "unavailable";
-  setAreaStatus: (status: "idle" | "loading" | "ready" | "unavailable") => void;
   setPoint: (lat: number, lon: number) => void;
   focusArea: (
     lat: number,
@@ -24,6 +23,7 @@ type Store = {
     bbox: BBox | null,
   ) => void;
   setPlace: (place: string | null) => void;
+  setAreaStatus: (status: Store["areaStatus"]) => void;
   setArea: (polygon: any | null, bbox: BBox | null, place: string | null) => void;
   setCrop: (crop: CropId) => void;
   setPriority: (key: keyof Priorities, value: number) => void;
@@ -45,19 +45,19 @@ export const useStore = create<Store>((set) => ({
   place: "Neiva, Huila, Colombia",
   polygon: null,
   bbox: null,
+  areaStatus: "idle",
   crop: "maiz",
   priorities: DEFAULT_PRIORITIES,
   scenario: { rain: 0, temp: 0 },
   flyToken: 0,
-  areaStatus: "idle",
-  setAreaStatus: (areaStatus) => set({ areaStatus }),
 
-  setPoint: (lat, lon) => set({ lat, lon, place: null, polygon: null, bbox: null, areaStatus: "idle" }),
+  setPoint: (lat, lon) => set((s) => ({ lat, lon, place: null, polygon: null, bbox: null, areaStatus: "loading", flyToken: s.flyToken + 1 })),
   focusArea: (lat, lon, place, polygon, bbox) =>
-    set((s) => ({ lat, lon, place, polygon, bbox, areaStatus: polygon ? "ready" : "idle", flyToken: s.flyToken + 1 })),
+    set((s) => ({ lat, lon, place, polygon, bbox, areaStatus: polygon || bbox ? "ready" : "idle", flyToken: s.flyToken + 1 })),
   setPlace: (place) => set({ place }),
+  setAreaStatus: (areaStatus) => set({ areaStatus }),
   setArea: (polygon, bbox, place) =>
-    set((s) => ({ polygon, bbox, place, areaStatus: polygon ? "ready" : "unavailable", flyToken: s.flyToken + 1 })),
+    set((s) => ({ polygon, bbox, place, areaStatus: polygon || bbox ? "ready" : "unavailable", flyToken: s.flyToken + 1 })),
   setCrop: (crop) => set({ crop }),
   setPriority: (key, value) =>
     set((s) => ({ priorities: { ...s.priorities, [key]: value } })),

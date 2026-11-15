@@ -32,7 +32,7 @@ oficiales.
 | **SoilGrids (ISRIC)** | Propiedades del suelo (arcilla, arena, materia orgánica, pH, CIC). | CC BY 4.0 | <https://soilgrids.org/> |
 | **Nominatim / OpenStreetMap** | Búsqueda de lugares. | ODbL | <https://nominatim.org/> |
 | **BigDataCloud** | Geocodificación inversa. | Términos del servicio | <https://www.bigdatacloud.com/> |
-| **geoBoundaries** | Límites administrativos (datos regionales opcionales). | CC BY 4.0 | <https://www.geoboundaries.org/> |
+| **geoBoundaries gbOpen** | Límites estáticos de los 33 departamentos/distritos y 1.122 municipios de Colombia en 3D; selección local de áreas en ambos mapas. Geometría simplificada, cuantizada y dividida por departamento. | CC BY 4.0 | <https://www.geoboundaries.org/api.html> |
 | **OpenStreetMap** | Mapa base del globo 2D. | ODbL | <https://www.openstreetmap.org/copyright> |
 | **Esri World Imagery / Streets** | Respaldo de tiles del mapa 2D. | Términos de Esri | <https://www.esri.com/> |
 | **Natural Earth (world-atlas)** | Geometría vectorial del globo 3D. | Dominio público | <https://www.naturalearthdata.com/> |
@@ -52,6 +52,7 @@ pedológico simple, y la interfaz lo indica como *"Suelo: estimado"*.
 | TypeScript | Apache-2.0 | <https://www.typescriptlang.org/> |
 | d3-geo | ISC | <https://d3js.org/d3-geo> |
 | topojson-client | ISC | <https://github.com/topojson/topojson-client> |
+| topojson-server | ISC | <https://github.com/topojson/topojson-server> |
 | Leaflet | BSD-2-Clause | <https://leafletjs.com/> |
 | Tailwind CSS | MIT | <https://tailwindcss.com/> |
 | Zustand | MIT | <https://zustand-demo.pmnd.rs/> |

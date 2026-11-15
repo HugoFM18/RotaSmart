@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Globe2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
-import { FlatMap } from "./FlatMap";
 import { Globe3D } from "./Globe3D";
+
+const FlatMap = lazy(() => import("./FlatMap").then(module => ({ default: module.FlatMap })));
 
 export function GlobeView() {
   const { t } = useTranslation();
@@ -15,7 +16,9 @@ export function GlobeView() {
 
   return (
     <div className="relative h-full w-full bg-[#0B1220]">
-      {mode === "globe" ? <Globe3D onRequestFlat={() => setMode("flat")} /> : <FlatMap />}
+      <Suspense fallback={<p role="status" className="p-4 text-xs text-white/70">{t("map.loadingGlobe")}</p>}>
+        {mode === "globe" ? <Globe3D onRequestFlat={() => setMode("flat")} /> : <FlatMap />}
+      </Suspense>
 
       <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-[250px] rounded-xl border border-white/15 bg-black/45 px-3 py-2 text-bone backdrop-blur">
         <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/70">

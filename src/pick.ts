@@ -1,6 +1,7 @@
 import { fetchArea } from "./site";
 import { useStore } from "./store";
 import i18n from "./i18n";
+import { localArea } from "./map/boundaries";
 
 let lastCall = 0;
 let token = 0;
@@ -14,17 +15,28 @@ export function pickLocation(lat: number, lon: number, zoom = 10) {
   const { setPoint, setArea } = useStore.getState();
 
   setPoint(lat, lon);
-  useStore.getState().setAreaStatus("loading");
+  const selectionToken = useStore.getState().flyToken;
 
   const run = async () => {
+    const isCurrent = () => {
+      const state = useStore.getState();
+      return myToken === token && state.flyToken === selectionToken && state.lat === lat && state.lon === lon;
+    };
+    try {
+      const area = await localArea(lat, lon, zoom);
+      if (!isCurrent()) return;
+      if (area) {
+        setArea(area.polygon, area.bbox, area.name);
+        return;
+      }
+    } catch { /* Network fallback if local assets are temporarily unavailable. */ }
     const wait = Math.max(0, 1100 - (Date.now() - lastCall));
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    if (myToken !== token) return;
+    if (!isCurrent()) return;
     lastCall = Date.now();
 
     const area = await fetchArea(lat, lon, i18n.resolvedLanguage ?? "es", zoom);
-    const current = useStore.getState();
-    if (myToken !== token || current.lat !== lat || current.lon !== lon) return;
+    if (!isCurrent()) return;
 
     if (area && (area.polygon || area.bbox)) {
       setArea(area.polygon, area.bbox, area.name);

@@ -43,6 +43,15 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/data\//.test(url.pathname),
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "map-geometry-v2",
+              expiration: { maxEntries: 64, maxAgeSeconds: 2592000 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+          {
             urlPattern: /^https:\/\/gibs\.earthdata\.nasa\.gov\/.*/i,
             handler: "CacheFirst",
             options: {

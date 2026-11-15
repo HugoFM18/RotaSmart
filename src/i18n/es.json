@@ -132,7 +132,13 @@
       "loading": "Buscando los límites de la región…",
       "ready": "Región delimitada",
       "unavailable": "Límite no disponible para este punto."
-    }
+    },
+    "focusArea": "Encuadrar la zona seleccionada",
+    "loadingGlobe": "Cargando mapa…",
+    "loadingDetail": "Cargando límites municipales…",
+    "loadingArea": "Buscando los límites de la zona…",
+    "areaError": "No se pudo delimitar esta zona. Puedes elegir otro punto.",
+    "detailError": "Algunos límites no se pudieron cargar."
   },
   "crops": {
     "maiz": "Maíz",

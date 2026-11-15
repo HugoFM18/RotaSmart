@@ -62,7 +62,7 @@ export default function App() {
       <Header />
 
       <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <aside className="order-2 min-h-0 w-full overflow-y-auto border-t border-line p-3 lg:order-1 lg:w-[420px] lg:shrink-0 lg:border-r lg:border-t-0">
+        <aside className="order-2 min-h-0 w-full flex-1 overflow-y-auto border-t border-line p-3 lg:order-1 lg:w-[420px] lg:flex-none lg:border-r lg:border-t-0">
           <div className="space-y-3 pb-2">
             <LocationCard />
             <CropSelect />
@@ -93,7 +93,7 @@ export default function App() {
           </div>
         </aside>
 
-        <div className="relative order-1 h-[46vh] w-full lg:order-2 lg:h-auto lg:flex-1">
+        <div className="relative order-1 h-[46vh] w-full shrink-0 lg:order-2 lg:h-auto lg:flex-1">
           <MapErrorBoundary
             fallback={
               <div className="grid h-full place-items-center bg-[#0B1220] px-6 text-center text-xs text-white/70">

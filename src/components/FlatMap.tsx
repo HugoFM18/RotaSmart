@@ -92,9 +92,13 @@ export function FlatMap() {
     });
 
     mapRef.current = map;
-    setTimeout(() => map.invalidateSize(), 50);
+    const resizeTimer = window.setTimeout(() => map.invalidateSize(), 50);
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+    resizeObserver.observe(containerRef.current);
 
     return () => {
+      window.clearTimeout(resizeTimer);
+      resizeObserver.disconnect();
       map.remove();
       mapRef.current = null;
     };
